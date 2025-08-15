@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Crawler Sản phẩm v2</title>
+<style>
+  body { font-family: Arial, sans-serif; padding:20px; text-align: center; }
+  input,button { padding:8px; margin:4px 0; }
+  .product { margin: 20px auto; padding-bottom: 20px; border-bottom: 1px solid #eee; max-width: 750px; }
+  .product img { max-width: 700px; height: auto; display: block; margin: 0 auto; }
+  .product-number { font-weight: bold; font-size: 16px; margin-bottom: 5px; }
+  .product-title { font-size: 18px; font-weight: bold; margin-top: 10px; }
+  .status { font-size:12px; opacity:.7; margin-bottom:8px; text-align: left; }
+</style>
+</head>
+<body>
+<h2>Crawl sản phẩm v2 (og:title / og:image)</h2>
+
+<label>ScraperAPI Key:</label><br>
+<input type="text" id="apiKey" value="a81f3cb242118447359ed92553e82749" size="60"><br>
+
+<label>URL sản phẩm ban đầu:</label><br>
+<input type="text" id="startUrl" placeholder="https://domain.com/product/..." size="80"><br>
+
+<button id="startBtn">Bắt đầu</button>
+<div class="status" id="status"></div>
+
+<h3>Kết quả:</h3>
+<div id="results"></div>
+
+<script>
+const defaultApiKey = "a81f3cb242118447359ed92553e82749";
+const maxProducts = 100;
+
+function absUrl(href, base) {
+  try { return href ? new URL(href, base).href : null; } catch { return null; }
+}
+
+async function fetchHTML(url, apiKey) {
+  const proxyUrl = `https://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(url)}`;
+  const res = await fetch(proxyUrl);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return await res.text();
+}
+
+function parseProduct(html, pageUrl) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  
+  // Lấy title và image từ meta og
+  const name = doc.querySelector('meta[property="og:title"]')?.getAttribute("content")?.trim() || "Không tìm thấy tên";
+  const img = absUrl(doc.querySelector('meta[property="og:image"]')?.getAttribute("content") || "", pageUrl);
+  
+  // Lấy URL tiếp theo: ưu tiên product-prev, nếu không có thì lấy rel="next"
+  let nextHref = doc.querySelector(".product-prev a")?.getAttribute("href") 
+              || doc.querySelector("a[rel='next']")?.getAttribute("href") 
+              || null;
+  const nextUrl = absUrl(nextHref, pageUrl);
+
+  return { name, img, nextUrl };
+}
+
+function addRow({name, img}, index) {
+  const wrap = document.createElement("div");
+  wrap.className = "product";
+  wrap.innerHTML = `
+    <div class="product-number">#${index}</div>
+    ${img ? `<img src="${img}" alt="${name}">` : ""}
+    <div class="product-title">${name}</div>
+  `;
+  document.getElementById("results").appendChild(wrap);
+}
+
+async function crawl(url, apiKey) {
+  const resultsEl = document.getElementById("results");
+  const statusEl = document.getElementById("status");
+  resultsEl.innerHTML = "";
+  statusEl.textContent = "Đang chạy...";
+
+  let count = 0;
+  let currentUrl = url;
+
+  while (currentUrl && count < maxProducts) {
+    try {
+      const html = await fetchHTML(currentUrl, apiKey);
+      const { name, img, nextUrl } = parseProduct(html, currentUrl);
+      count++;
+      addRow({ name, img }, count);
+      statusEl.textContent = `Đã lấy ${count}/${maxProducts} sản phẩm...`;
+      currentUrl = nextUrl;
+    } catch (e) {
+      console.error("Lỗi:", e);
+      break;
+    }
+  }
+
+  statusEl.textContent += " • Hoàn tất.";
+}
+
+document.getElementById("startBtn").addEventListener("click", () => {
+  const apiKeyInput = document.getElementById("apiKey").value.trim();
+  const apiKey = apiKeyInput || defaultApiKey;
+  const startUrl = document.getElementById("startUrl").value.trim();
+  if (!apiKey) return alert("Nhập API key ScraperAPI trước!");
+  if (!startUrl) return alert("Nhập URL bắt đầu!");
+  crawl(startUrl, apiKey);
+});
+</script>
+</body>
+</html>

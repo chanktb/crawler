@@ -15,7 +15,6 @@
 <body>
 
 <h2>Extractor sản phẩm TechTeesUSA</h2>
-<p>Truy cập trang TechTeesUSA, bấm chuột phải chọn Save as rồi lưu file html về máy sau đó upload bên dưới</p>
 <input type="file" id="fileInput" accept=".html,.htm">
 
 <div id="output"></div>
@@ -31,16 +30,12 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
         const doc = parser.parseFromString(e.target.result, 'text/html');
 
         const startDiv = doc.querySelector('div.row.large-columns-5.medium-columns-3.small-columns-2.row-normal');
-        const endDiv = doc.querySelector('div.container.section-title-container h1.section-title.section-title-center');
-
-        if (!startDiv || !endDiv) {
-            alert('Không tìm thấy đoạn HTML mong muốn.');
+        if (!startDiv) {
+            alert('Không tìm thấy danh sách sản phẩm.');
             return;
         }
 
-        // Lấy tất cả sản phẩm trong startDiv
         const products = startDiv.querySelectorAll('.product-small.box');
-
         let outputHTML = '';
         let index = 1;
 
@@ -48,7 +43,14 @@ document.getElementById('fileInput').addEventListener('change', function(event) 
             const imgTag = prod.querySelector('img');
             const titleTag = prod.querySelector('p.name.product-title a');
 
-            const imgSrc = imgTag ? imgTag.src : '';
+            let imgSrc = imgTag ? imgTag.getAttribute('src') : '';
+
+            // Nếu link ảnh không bắt đầu bằng http => chuyển sang domain gốc
+            if (imgSrc && !imgSrc.startsWith('http')) {
+                const fileName = imgSrc.split('/').pop(); // lấy tên file ảnh
+                imgSrc = 'https://images.techteesusa.com/2025/08/' + fileName;
+            }
+
             const title = titleTag ? titleTag.textContent.trim() : 'Không có tiêu đề';
 
             outputHTML += `

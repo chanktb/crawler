@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Extractor TeeWorksUSA (Chỉ 28 sản phẩm trang chủ - nhanh)</title>
+<title>Extractor TeeWorksUSA (Auto Run)</title>
 <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
     h2 { color: #333; }
@@ -14,23 +14,23 @@
 </head>
 <body>
 
-<h2>Extractor TeeWorksUSA (Chỉ 28 sản phẩm trang chủ - nhanh)</h2>
+<h2>Extractor sản phẩm TeeWorksUSA (Auto Run)</h2>
 <div id="status" class="status">Vui lòng chờ, đang quét sản phẩm...</div>
 <div id="output"></div>
 
 <script>
 (function() {
     const url = 'https://teeworksusa.com/';
-    const proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(url);
+    const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
 
     fetch(proxyUrl)
         .then(response => {
             if (!response.ok) throw new Error('Không thể tải trang (CORS hoặc lỗi mạng).');
-            return response.json();
+            return response.text();
         })
-        .then(data => {
+        .then(html => {
             const parser = new DOMParser();
-            const doc = parser.parseFromString(data.contents, 'text/html');
+            const doc = parser.parseFromString(html, 'text/html');
 
             const startDiv = doc.querySelector('div.posts-wrap.products-container.has-ccols.ccols-xl-4.ccols-md-3.ccols-sm-2.ccols-2.has-ccols-spacing');
             if (!startDiv) {

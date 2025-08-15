@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Site Product Viewer</title>
+<style>
+  body { font-family: Arial; background: #f9f9f9; padding: 20px; display: flex; justify-content: center; }
+  .container { max-width: 800px; width: 100%; }
+  h1 { text-align: center; }
+  .site-list { margin: 10px 0; display: flex; flex-direction: column; gap: 10px; }
+  .site-item { display: flex; justify-content: space-between; align-items: center; }
+  input[type=text] { padding: 6px; width: 60%; margin-right: 5px; }
+  button { padding: 6px 12px; cursor: pointer; }
+  .product-card { background: #fff; padding: 15px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; flex-direction: column; align-items: center; }
+  .product-number { font-size: 14px; font-weight: bold; color: #333; margin-bottom: 5px; }
+  .product-card img { max-width: 100%; height: auto; border-radius: 5px; }
+  .product-name { font-size: 16px; font-weight: bold; margin: 10px 0 5px; text-align: center; }
+  .product-date { font-size: 12px; color: #888; margin-bottom: 5px; }
+  .product-desc { font-size: 13px; color: #555; text-align: center; }
+  .pagination { display: flex; justify-content: space-between; margin: 20px 0; }
+  .pagination button { padding: 8px 15px; border: none; border-radius: 5px; background: #007bff; color: #fff; cursor: pointer; transition: background 0.2s; }
+  .pagination button:disabled { background: #ccc; cursor: not-allowed; }
+  .pagination button:hover:not(:disabled) { background: #0056b3; }
+  .error { color: red; font-weight: bold; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Multi-Site Product Viewer V2 15.8.25</h1>
+
+  <div class="site-list" id="siteList"></div>
+
+  <div style="margin-top:15px;">
+    <input type="text" id="domainInput" placeholder="Enter new domain to test">
+    <button id="addDomainBtn">Load Domain</button>
+  </div>
+
+  <div id="products"></div>
+  <div class="pagination">
+    <button id="prevBtn">Previous</button>
+    <button id="nextBtn">Next</button>
+  </div>
+</div>
+
+<script>
+let perPage = 50;
+let currentPage = 1;
+let currentDomain = '';
+
+const defaultDomains = [
+  "teehandus.com",
+  "teleteeshirt.com",
+  "teesprime.com",
+  "clickoneshirt.com",
+  "collectionpostertour.com",
+  "mercuryshirt.com",
+  "wildfoxtee.com",
+  "capitoneshirt.com",
+  "lovingsquad.com"
+];
+
+
+const siteListContainer = document.getElementById('siteList');
+const productsContainer = document.getElementById('products');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+function renderDomainList() {
+  siteListContainer.innerHTML = '';
+  defaultDomains.forEach(domain => {
+    const div = document.createElement('div');
+    div.className = 'site-item';
+    div.innerHTML = `<span>${domain}</span><button onclick="showProducts('${domain}')">Show Product</button>`;
+    siteListContainer.appendChild(div);
+  });
+}
+renderDomainList();
+
+async function loadProducts(domain, page = 1) {
+  currentDomain = domain;
+  productsContainer.innerHTML = '';
+  try {
+    const res = await fetch(`https://${domain}/wp-json/wp/v2/product?orderby=date&order=desc&per_page=${perPage}&page=${page}`);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const products = await res.json();
+    if (!Array.isArray(products)) throw new Error('Invalid JSON');
+    if (products.length === 0) {
+      productsContainer.innerHTML = '<p>No products found.</p>';
+    }
+
+    for (let i = 0; i < products.length; i++) {
+      const productNumber = (currentPage - 1) * perPage + i + 1;
+      const product = products[i];
+
+      // Luôn parse content.rendered để lấy <img>
+      let imgUrl = 'https://via.placeholder.com/200';
+      if (product.content && product.content.rendered) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = product.content.rendered;
+        const imgTag = tempDiv.querySelector('img');
+        if (imgTag && imgTag.src) imgUrl = imgTag.src;
+      }
+
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.innerHTML = `
+        <div class="product-number">#${productNumber}</div>
+        <img src="${imgUrl}" alt="${product.title.rendered}">
+        <div class="product-name">${product.title.rendered}</div>
+        <div class="product-date">Published: ${new Date(product.date).toLocaleDateString()}</div>
+        <div class="product-desc">${product.short_description || ''}</div>
+      `;
+      productsContainer.appendChild(card);
+    }
+
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = products.length < perPage;
+
+  } catch (err) {
+    productsContainer.innerHTML = `<div class="error">Failed to load ${domain}: ${err.message}</div>`;
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+  }
+}
+
+function showProducts(domain) {
+  currentPage = 1;
+  loadProducts(domain, currentPage);
+}
+
+document.getElementById('addDomainBtn').addEventListener('click', () => {
+  const domain = document.getElementById('domainInput').value.trim();
+  if (domain) {
+    currentPage = 1;
+    loadProducts(domain, currentPage);
+    document.getElementById('domainInput').value = '';
+  }
+});
+
+prevBtn.addEventListener('click', () => {
+  if (currentPage > 1 && currentDomain) {
+    currentPage--;
+    loadProducts(currentDomain, currentPage);
+  }
+});
+nextBtn.addEventListener('click', () => {
+  if (currentDomain) {
+    currentPage++;
+    loadProducts(currentDomain, currentPage);
+  }
+});
+</script>
+
+</body>
+</html>

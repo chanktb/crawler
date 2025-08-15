@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Crawl sản phẩm V3 (sitemap XML → og:title / og:image)</title>
+<style>
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: auto; padding: 20px; background: #f5f5f5; }
+    h1 { text-align: center; color: #333; font-size: 22px; }
+    input, button { padding: 8px; margin: 5px 0; }
+    #results img { max-width: 700px; display: block; margin: 5px 0; }
+    .item { background: white; padding: 10px; margin: 10px 0; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .loading { color: red; font-weight: bold; }
+    .stt { font-weight: bold; margin-bottom: 5px; }
+</style>
+</head>
+<body>
+
+<h1>Crawl sản phẩm V3 (og:title / og:image)</h1>
+
+<!-- Hướng dẫn sử dụng -->
+<p><b>Hướng dẫn:</b></p>
+<ol>
+    <li>Đăng ký <a href="https://www.scraperapi.com/" target="_blank">ScraperAPI</a> để lấy API key (miễn phí).</li>
+    <li>Chọn file sitemap XML từ máy tính.</li>
+    <li>Nhập API key của bạn (mặc định đã có sẵn).</li>
+    <li>Bấm <b>Bắt đầu</b> và chờ kết quả.</li>
+</ol>
+
+<!-- Chọn file XML -->
+<label>Chọn file sitemap XML:</label><br>
+<input type="file" id="xmlFile" accept=".xml"><br>
+
+<!-- API key -->
+<label>API key:</label><br>
+<input type="text" id="apiKey" value="a81f3cb242118447359ed92553e82749" style="width: 100%;"><br>
+
+<!-- Nút bắt đầu -->
+<button onclick="startCrawl()">Bắt đầu</button>
+<p id="status" class="loading"></p>
+
+<!-- Kết quả -->
+<div id="results"></div>
+
+<script>
+async function startCrawl() {
+    const fileInput = document.getElementById('xmlFile').files[0];
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const resultsDiv = document.getElementById('results');
+    const status = document.getElementById('status');
+
+    resultsDiv.innerHTML = "";
+    status.textContent = "Đang chạy...";
+
+    if (!fileInput) {
+        alert("Vui lòng chọn file XML trước.");
+        return;
+    }
+
+    const text = await fileInput.text();
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(text, "application/xml");
+
+    // Lấy danh sách URL và lastmod
+    let urls = Array.from(xmlDoc.getElementsByTagName("url"))
+        .map(urlNode => {
+            const loc = urlNode.getElementsByTagName("loc")[0]?.textContent || "";
+            const lastmod = urlNode.getElementsByTagName("lastmod")[0]?.textContent || "";
+            return { loc, lastmod };
+        })
+        .filter(item => item.loc.includes("/product/")); // chỉ lấy URL chứa /product/
+
+    // Sắp xếp theo lastmod mới nhất trước
+    urls.sort((a, b) => new Date(b.lastmod) - new Date(a.lastmod));
+
+    // Lấy tối đa 100 URL
+    urls = urls.slice(0, 100);
+
+    let count = 1;
+    for (let { loc } of urls) {
+        try {
+            const proxyUrl = `https://api.scraperapi.com/?api_key=${apiKey}&url=${encodeURIComponent(loc)}`;
+            const res = await fetch(proxyUrl);
+            const html = await res.text();
+            const doc = new DOMParser().parseFromString(html, "text/html");
+
+            const title = doc.querySelector('meta[property="og:title"]')?.content || "Không tìm thấy tiêu đề";
+            const image = doc.querySelector('meta[property="og:image"]')?.content || "";
+
+            // Hiển thị kết quả
+            const itemDiv = document.createElement("div");
+            itemDiv.className = "item";
+            itemDiv.innerHTML = `
+                <div class="stt">#${count}</div>
+                ${image ? `<img src="${image}" alt="Image">` : ""}
+                <div>${title}</div>
+            `;
+            resultsDiv.appendChild(itemDiv);
+
+            count++;
+        } catch (err) {
+            console.error("Lỗi crawl:", err);
+        }
+    }
+
+    status.textContent = "Hoàn tất!";
+}
+</script>
+
+</body>
+</html>

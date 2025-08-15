@@ -2,115 +2,106 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Crawl sản phẩm V3.1 (og:title / og:image)</title>
+<title>Crawler sản phẩm V3 (og:title / og:image)</title>
 <style>
-  body { font-family: Arial, sans-serif; padding: 20px; }
-  input, button { margin: 5px 0; padding: 5px; }
-  img { max-width: 700px; display: block; margin-bottom: 5px; }
-  .item { margin-bottom: 30px; }
-  #results { margin-top: 20px; }
+    body { font-family: Arial, sans-serif; max-width: 900px; margin: auto; padding: 20px; }
+    input[type="text"], input[type="file"] { width: 100%; padding: 8px; margin: 5px 0; }
+    button { padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer; }
+    button:hover { background: #218838; }
+    .product { margin-bottom: 30px; border-bottom: 1px solid #ddd; padding-bottom: 20px; }
+    img { max-width: 700px; display: block; }
+    .number { font-weight: bold; margin-bottom: 5px; }
+    #results { margin-top: 20px; }
+    #status { color: blue; margin-top: 10px; }
 </style>
 </head>
 <body>
 
-<h2>Crawl sản phẩm V3.1 (og:title / og:image)</h2>
+<h2>Crawl sản phẩm V3 (og:title / og:image)</h2>
 
-<label>API Key ScraperAPI:</label><br>
-<input type="text" id="apiKey" size="50" value="a81f3cb242118447359ed92553e82749"><br>
+<label>API ScraperAPI Key:</label>
+<input type="text" id="apiKey" placeholder="Nhập API key ScraperAPI" value="a81f3cb242118447359ed92553e82749">
 
-<label>URL API HEAD (Vercel):</label><br>
-<input type="text" id="headApiUrl" size="80" placeholder="https://your-vercel-project.vercel.app/api/api-head"><br>
+<label>API HEAD URL:</label>
+<input type="text" id="apiHeadUrl" placeholder="Nhập API HEAD URL" value="https://head-api-vercel.vercel.app/api/api-head?url=">
 
-<label>Upload Sitemap XML:</label><br>
-<input type="file" id="xmlFile" accept=".xml"><br><br>
+<label>Chọn file sitemap XML:</label>
+<input type="file" id="xmlFile" accept=".xml">
 
-<button id="startBtn">Bắt đầu</button>
-<p id="status"></p>
+<button onclick="startCrawl()">Bắt đầu</button>
+<div id="status"></div>
+
+<p><b>hướng dẫn sử dụng:</b><br>
+- đăng ký ScraperAPI để lấy key.<br>
+- truy cập vào site cần crawl, lấy file sitemap.xml và tải về.<br>
+- upload file sitemap.xml ở ô trên và bấm Bắt đầu.</p>
 
 <div id="results"></div>
 
 <script>
-document.getElementById("startBtn").addEventListener("click", async () => {
-  const apiKey = document.getElementById("apiKey").value.trim();
-  const headApiUrl = document.getElementById("headApiUrl").value.trim();
-  const fileInput = document.getElementById("xmlFile").files[0];
-
-  if (!apiKey || !headApiUrl || !fileInput) {
-    alert("Vui lòng nhập API Key, URL API HEAD và upload file XML");
-    return;
-  }
-
-  document.getElementById("status").textContent = "Đang xử lý sitemap...";
-  
-  // Đọc XML
-  const text = await fileInput.text();
-  const parser = new DOMParser();
-  const xmlDoc = parser.parseFromString(text, "application/xml");
-
-  let urls = Array.from(xmlDoc.getElementsByTagName("url"))
-    .map(u => ({
-      loc: u.getElementsByTagName("loc")[0]?.textContent.trim(),
-      lastmod: u.getElementsByTagName("lastmod")[0]?.textContent.trim() || null
-    }))
-    .filter(item => item.loc.includes("/product/"));
-
-  // Lấy Last-Modified thực từ API HEAD
-  let updatedUrls = [];
-  for (let i = 0; i < urls.length; i++) {
-    document.getElementById("status").textContent = `Đang lấy Last-Modified (${i+1}/${urls.length})...`;
-    try {
-      let res = await fetch(`${headApiUrl}?url=${encodeURIComponent(urls[i].loc)}`);
-      let data = await res.json();
-      updatedUrls.push({
-        url: urls[i].loc,
-        lastModified: data.lastModified ? new Date(data.lastModified) : new Date(0)
-      });
-    } catch (e) {
-      updatedUrls.push({ url: urls[i].loc, lastModified: new Date(0) });
+async function startCrawl() {
+    const apiKey = document.getElementById('apiKey').value.trim();
+    const apiHead = document.getElementById('apiHeadUrl').value.trim();
+    const fileInput = document.getElementById('xmlFile').files[0];
+    const statusEl = document.getElementById('status');
+    const resultsEl = document.getElementById('results');
+    resultsEl.innerHTML = "";
+    if (!apiKey || !apiHead || !fileInput) {
+        alert("Vui lòng nhập đầy đủ API key, API HEAD URL và chọn file XML!");
+        return;
     }
-  }
 
-  // Sắp xếp newest trước, lấy 100 link
-  updatedUrls.sort((a, b) => b.lastModified - a.lastModified);
-  const top100 = updatedUrls.slice(0, 100);
-
-  // Crawl dữ liệu meta
-  const resultsDiv = document.getElementById("results");
-  resultsDiv.innerHTML = "";
-  
-  for (let i = 0; i < top100.length; i++) {
-    document.getElementById("status").textContent = `Đang crawl sản phẩm ${i+1}/${top100.length}...`;
-    try {
-      let scrapeUrl = `https://api.scraperapi.com/?api_key=${apiKey}&url=${encodeURIComponent(top100[i].url)}`;
-      let res = await fetch(scrapeUrl);
-      let html = await res.text();
-      let doc = new DOMParser().parseFromString(html, "text/html");
-
-      let title = doc.querySelector('meta[property="og:title"]')?.content || "Không tìm thấy tiêu đề";
-      let image = doc.querySelector('meta[property="og:image"]')?.content || "";
-
-      let itemDiv = document.createElement("div");
-      itemDiv.className = "item";
-      itemDiv.innerHTML = `<strong>#${i+1}</strong><br>${image ? `<img src="${image}">` : ""}<div>${title}</div>`;
-      resultsDiv.appendChild(itemDiv);
-
-    } catch (e) {
-      console.error(e);
+    statusEl.textContent = "Đang đọc sitemap...";
+    const xmlText = await fileInput.text();
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, "application/xml");
+    const locs = [...xmlDoc.getElementsByTagName("loc")].map(e => e.textContent.trim());
+    const productUrls = locs.filter(url => url.includes("/product/"));
+    
+    if (productUrls.length === 0) {
+        statusEl.textContent = "Không tìm thấy URL chứa /product/ trong sitemap.";
+        return;
     }
-  }
 
-  document.getElementById("status").textContent = "Hoàn thành!";
-});
+    statusEl.textContent = "Đang lấy Last-Modified từ API HEAD...";
+    const urlsWithDates = [];
+    for (let url of productUrls) {
+        try {
+            const headRes = await fetch(apiHead + encodeURIComponent(url));
+            const headJson = await headRes.json();
+            urlsWithDates.push({ url, lastModified: new Date(headJson.lastModified || 0) });
+        } catch {
+            urlsWithDates.push({ url, lastModified: new Date(0) });
+        }
+    }
+
+    urlsWithDates.sort((a, b) => b.lastModified - a.lastModified);
+    const topUrls = urlsWithDates.slice(0, 100);
+
+    statusEl.textContent = "Đang crawl sản phẩm...";
+    let count = 0;
+    for (let item of topUrls) {
+        count++;
+        try {
+            const proxyUrl = `https://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(item.url)}`;
+            const res = await fetch(proxyUrl);
+            const html = await res.text();
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            const title = doc.querySelector('meta[property="og:title"]')?.content || "No title";
+            const image = doc.querySelector('meta[property="og:image"]')?.content || "";
+            const div = document.createElement("div");
+            div.className = "product";
+            div.innerHTML = `<div class="number">#${count}</div>
+                             <img src="${image}" alt="${title}">
+                             <div>${title}</div>`;
+            resultsEl.appendChild(div);
+        } catch {
+            console.log("Lỗi khi crawl:", item.url);
+        }
+    }
+    statusEl.textContent = "Hoàn thành!";
+}
 </script>
-
-<p><b>Hướng dẫn sử dụng:</b></p>
-<ol>
-  <li>Đăng ký ScraperAPI để lấy API Key (miễn phí).</li>
-  <li>Deploy file <code>api-head.js</code> lên Vercel để lấy URL API HEAD.</li>
-  <li>Tải sitemap XML của website cần crawl.</li>
-  <li>Upload XML vào tool, nhập API Key + URL API HEAD, bấm "Bắt đầu".</li>
-  <li>Kết quả sẽ hiển thị newest URL trước, tối đa 100 sản phẩm.</li>
-</ol>
 
 </body>
 </html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Extract Products - Teespix</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; text-align: center; }
+    h2 { color: #333; }
+    table { 
+      border-collapse: collapse; 
+      margin: 20px auto; 
+      width: 90%; 
+      max-width: 1000px;
+    }
+    th, td { 
+      border: 1px solid #ccc; 
+      padding: 10px; 
+      text-align: center; 
+      vertical-align: middle;
+    }
+    th { background: #f4f4f4; }
+    img { max-width: 150px; height: auto; }
+  </style>
+</head>
+<body>
+  <h2>Danh sách sản phẩm Teespix</h2>
+  <input type="file" id="fileInput" accept=".html">
+  <div id="result"></div>
+
+  <script>
+    document.getElementById("fileInput").addEventListener("change", function(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(e.target.result, "text/html");
+
+        const container = doc.querySelector(
+          '.row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push'
+        );
+
+        let html = "<table><tr><th>STT</th><th>Image</th><th>Title</th></tr>";
+        if (container) {
+          const products = container.querySelectorAll(".product-small");
+          products.forEach((product, idx) => {
+            const titleTag = product.querySelector("a[aria-label]");
+            const imgTag = product.querySelector("img");
+
+            const title = titleTag ? titleTag.getAttribute("aria-label") : "";
+            const img = imgTag ? imgTag.getAttribute("src") : "";
+
+            html += `<tr>
+                      <td>${idx + 1}</td>
+                      <td><img src="${img}" alt="img"></td>
+                      <td>${title}</td>
+                    </tr>`;
+          });
+        } else {
+          html += "<tr><td colspan='3'>❌ Không tìm thấy container sản phẩm</td></tr>";
+        }
+        html += "</table>";
+
+        document.getElementById("result").innerHTML = html;
+      };
+      reader.readAsText(file);
+    });
+  </script>
+</body>
+</html>

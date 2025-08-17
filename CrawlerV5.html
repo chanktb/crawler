@@ -33,6 +33,10 @@
     <b>teeworksusa.com</b>
     <button onclick="showProducts('teeworksusa')">Show sản phẩm</button>
   </div>
+  <div class="domain">
+    <b>geekteesus.com</b>
+    <button onclick="showProducts('geekteesus')">Show sản phẩm</button>
+  </div>
 </div>
 
 <div id="status">Chưa quét.</div>
@@ -68,6 +72,17 @@ const domains = {
     titleSel: "h3.porto-heading a",
     imgSel: "img",
     imgAttr: "src"
+  },
+  geekteesus: {
+    url: "https://geekteesus.com/",
+    containerSel: [
+      "div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall.row-full-width",
+      "div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall"
+    ],
+    itemSel: ".product-small.box",
+    titleSel: "p.name.product-title a",
+    imgSel: "img",
+    imgAttr: "src"
   }
 };
 
@@ -83,10 +98,20 @@ async function showProducts(domainKey) {
     const text = await res.text();
     const doc = new DOMParser().parseFromString(text, "text/html");
 
-    const container = doc.querySelector(cfg.containerSel);
-    if (!container) throw new Error("Không tìm thấy container");
+    let items = [];
+    if (Array.isArray(cfg.containerSel)) {
+      cfg.containerSel.forEach(sel => {
+        const container = doc.querySelector(sel);
+        if (container) {
+          const found = container.querySelectorAll(cfg.itemSel);
+          found.forEach(it => items.push(it));
+        }
+      });
+    } else {
+      const container = doc.querySelector(cfg.containerSel);
+      if (container) items = container.querySelectorAll(cfg.itemSel);
+    }
 
-    const items = container.querySelectorAll(cfg.itemSel);
     const results = [];
     items.forEach(it => {
       let title = "";
@@ -129,4 +154,3 @@ function render(list) {
 </script>
 </body>
 </html>
-

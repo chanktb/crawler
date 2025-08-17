@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Product Meta Scraper (Cloudflare Worker)</title>
+  <style>
+    body { font-family: sans-serif; background: #0b1220; color: #e9eefb; margin: 0; }
+    header { padding: 20px; border-bottom: 1px solid #1e2a44; background: #0b1220; }
+    h1 { margin: 0 0 6px; font-size: 20px; }
+    .muted { color: #8ea0c0; font-size: 13px; }
+    .wrap { max-width: 900px; margin: 0 auto; padding: 20px; }
+    .card {
+      background: #121a2b;
+      border: 1px solid #1e2a44;
+      border-radius: 16px;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto 20px auto;
+    }
+    .form-group { margin-bottom: 16px; text-align: left; }
+    .form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: #8ea0c0; }
+    input[type="text"] {
+      background: #0d1525;
+      border: 1px solid #1e2a44;
+      color: #e9eefb;
+      padding: 10px 12px;
+      border-radius: 10px;
+      width: 100%;
+    }
+    .form-actions { text-align: center; margin-top: 10px; }
+    button {
+      cursor: pointer;
+      border: 1px solid #1e2a44;
+      background: #263a94;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 600;
+      margin: 0 6px;
+    }
+    button.stop { background: #a83030; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result-item {
+      margin: 20px auto;
+      padding: 16px;
+      border: 1px solid #1e2a44;
+      border-radius: 12px;
+      background: #0d1525;
+      max-width: 700px;
+      text-align: center;
+    }
+    .result-item h2 { margin: 0 0 12px; font-size: 18px; }
+    .result-item img {
+      max-width: 100%;
+      border-radius: 10px;
+      border: 1px solid #1e2a44;
+      margin-bottom: 12px;
+    }
+    code.block {
+      display: block;
+      white-space: pre-wrap;
+      background: #0d1525;
+      padding: 10px;
+      border-radius: 8px;
+      color: #c5d7ff;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1><a href="/crawler/">Danh sách tools</a></h1>
+      <h2>Tool quét meta sản phẩm qua Cloudflare Worker Proxy</h2>
+      <div class="muted">Nhập URL sản phẩm đầu tiên. Worker proxy sẽ fetch hộ bạn.</div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="card">
+      <div class="form-group">
+        <label>URL sản phẩm bắt đầu</label>
+        <input id="startUrl" type="text" placeholder="https://example.com/product">
+      </div>
+      <div class="form-group">
+        <label>Giới hạn sản phẩm (tối đa 100)</label>
+        <input id="limit" type="text" value="100">
+      </div>
+      <div class="form-actions">
+        <button id="btnStart">Bắt đầu</button>
+        <button id="btnStop" class="stop" disabled>Dừng</button>
+      </div>
+    </div>
+
+    <div id="results"></div>
+
+    <details style="margin-top:14px">
+      <summary>Log</summary>
+      <code class="block" id="log"></code>
+    </details>
+  </div>
+
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const resultsDiv = $("#results");
+    let stopping = false, running = false;
+
+    // URL Worker proxy của bạn (thay lại bằng worker thật)
+    const WORKER_URL = "https://scraperapialt.trantpu.workers.dev/?url=";
+
+    function log(msg) {
+      const el = $("#log");
+      el.textContent = `[${new Date().toLocaleTimeString()}] ${msg}\n` + el.textContent;
+    }
+
+    function buildProxyUrl(url) {
+      return WORKER_URL + encodeURIComponent(url);
+    }
+
+    async function fetchDoc(url) {
+      const res = await fetch(buildProxyUrl(url));
+      const html = await res.text();
+      return new DOMParser().parseFromString(html, "text/html");
+    }
+
+    function extractInfo(doc) {
+      const title = doc.querySelector('meta[property="og:title"]')?.content || "";
+      const img = doc.querySelector('meta[property="og:image:secure_url"]')?.content ||
+                  doc.querySelector('meta[property="og:image"]')?.content || "";
+      return { title, img };
+    }
+
+    function findNextUrl(doc, baseUrl) {
+      const dropdowns = doc.querySelectorAll("li.prod-dropdown.has-dropdown");
+      if (dropdowns.length >= 2) {
+        const link = dropdowns[1].querySelector("a[href]");
+        if (link) {
+          try { return new URL(link.getAttribute("href"), baseUrl).toString(); } catch {}
+        }
+      }
+      return null;
+    }
+
+    function addResult(idx, info) {
+      const div = document.createElement("div");
+      div.className = "result-item";
+      div.innerHTML = `
+        <h2>STT: ${idx}</h2>
+        ${info.img ? `<img src="${info.img}" alt="Product image">` : ""}
+        <div>${info.title || "—"}</div>
+      `;
+      resultsDiv.appendChild(div);
+    }
+
+    async function crawl(startUrl, limit) {
+      let url = startUrl, count = 0, visited = new Set();
+      running = true; stopping = false;
+      $("#btnStart").disabled = true;
+      $("#btnStop").disabled = false;
+
+      while (!stopping && url && count < limit) {
+        if (visited.has(url)) {
+          log(`URL đã truy cập, bỏ qua: ${url}`);
+          break;
+        }
+        visited.add(url);
+        log(`Đang tải: ${url}`);
+
+        try {
+          const doc = await fetchDoc(url);
+          const info = extractInfo(doc);
+          count++;
+          addResult(count, info);
+          url = findNextUrl(doc, url);
+          if (!url) {
+            log("Không tìm thấy URL tiếp theo => Dừng.");
+            break;
+          }
+        } catch (e) {
+          log("Lỗi: " + e.message);
+          break;
+        }
+      }
+
+      running = false;
+      $("#btnStart").disabled = false;
+      $("#btnStop").disabled = true;
+    }
+
+    $("#btnStart").addEventListener("click", () => {
+      const startUrl = $("#startUrl").value.trim();
+      let limit = parseInt($("#limit").value.trim(), 10) || 100;
+      limit = Math.min(100, Math.max(1, limit));
+      resultsDiv.innerHTML = "";
+      if (!startUrl) { alert("Điền URL sản phẩm"); return; }
+      crawl(startUrl, limit);
+    });
+
+    $("#btnStop").addEventListener("click", () => { stopping = true; $("#btnStop").disabled = true; });
+  </script>
+</body>
+</html>

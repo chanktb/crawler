@@ -46,8 +46,9 @@ const domains = {
   teespix: {
     url: "https://teespix.com/",
     containerSel: ".row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push",
-    itemSel: ".product-small",
-    titleSel: ".woocommerce-loop-product__title",
+    itemSel: "div.product",
+    titleSel: "a[aria-label]",
+    titleAttr: "aria-label",  // lấy từ attr aria-label
     imgSel: "img",
     imgAttr: "src"
   },
@@ -88,8 +89,13 @@ async function showProducts(domainKey) {
     const results = [];
     items.forEach(it => {
       let title = "";
-      const tEl = it.querySelector(cfg.titleSel);
-      if (tEl) title = tEl.textContent.trim();
+      if (cfg.titleAttr) {
+        const tEl = it.querySelector(cfg.titleSel);
+        if (tEl) title = tEl.getAttribute(cfg.titleAttr) || "";
+      } else {
+        const tEl = it.querySelector(cfg.titleSel);
+        if (tEl) title = tEl.textContent.trim();
+      }
 
       let img = "";
       const imgEl = it.querySelector(cfg.imgSel);

@@ -60,7 +60,25 @@ const scraperApiKey = "a81f3cb242118447359ed92553e82749"; // dùng cho dreameshi
 
 // --- Domain gốc từ V6.3 ---
 const baseDomains = {
-  "teespix.com": { url: "https://teespix.com/", containerSel: ".row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: "div.product", titleSel: "a[aria-label]", titleAttr: "aria-label", imgSel: "img", imgAttr: "src" },
+  
+  
+  "eteeclothing.com": { 
+    url: "https://eteeclothing.com/", 
+    containerSel: ".row.large-columns-6.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", 
+    itemSel: ".product-small.box", 
+    titleSel: "p.name.product-title a", 
+    imgSel: "img", 
+    imgAttr: "src" 
+  },
+"nowbestshirt.com": { 
+    url: "https://nowbestshirt.com/", 
+    containerSel: ".row.large-columns-5.medium-columns-3.small-columns-2.row-small", 
+    itemSel: ".product-small.box", 
+    titleSel: "p.name.product-title a", 
+    imgSel: ".box-image img:nth-child(2)", 
+    imgAttr: "src" 
+  },
+"teespix.com": { url: "https://teespix.com/", containerSel: ".row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: "div.product", titleSel: "a[aria-label]", titleAttr: "aria-label", imgSel: "img", imgAttr: "src" },
   "techteesusa.com": { url: "https://techteesusa.com/", containerSel: "div.row.large-columns-5.medium-columns-3.small-columns-2.row-normal", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
   "teeworksusa.com": { url: "https://teeworksusa.com/" }, 
   "geekteesus.com": { url: "https://geekteesus.com/", containerSel: ["div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall.row-full-width","div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall"], itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
@@ -232,7 +250,38 @@ async function crawlSequential(domainKey, homeUrl, targetCount=100){
   return results;
 }
 async function fetchDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();return new DOMParser().parseFromString(html,"text/html");}
-async function fetchProductMetaAndDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();const doc=new DOMParser().parseFromString(html,"text/html");const title=doc.querySelector('meta[property="og:title"]')?.content||doc.querySelector("h1")?.textContent?.trim()||"";const img=doc.querySelector('meta[property="og:image"]')?.content||"";return {meta:{title,img},doc,url};}
+async function fetchProductMetaAndDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();const doc=new DOMParser().parseFromString(html,"text/html");const title=doc.querySelector('meta[property="og:title"]')?.content||doc.querySelector("h1")?.textContent?.trim()||"";let img = "";
+  if (domainKey === "teeworksusa.com") {
+    // 1) Ưu tiên lấy đúng ảnh gốc ornaments-black.jpg trong gallery
+    const foundDiv = doc.querySelector('.woocommerce-product-gallery__image[data-src$="ornaments-black.jpg"]');
+    if (foundDiv) {
+      img = foundDiv.getAttribute("data-src");
+      console.log("[teeworksusa] lấy từ data-src:", img);
+    }
+    // 2) Thử lấy từ thẻ <a>
+    if (!img) {
+      const foundA = doc.querySelector('.woocommerce-product-gallery__image a[href$="ornaments-black.jpg"]');
+      if (foundA) {
+        img = foundA.getAttribute("href");
+        console.log("[teeworksusa] lấy từ <a href>:", img);
+      }
+    }
+    // 3) Nếu vẫn chưa thấy, quét toàn bộ HTML để tìm URL chứa ornaments-black.jpg (dù ở script/meta)
+    if (!img) {
+      const m = (html.match(/https?:\/\/[^"'\s>]*ornaments-black\.jpg/gi) || [])[0];
+      if (m) {
+        img = m;
+        console.log("[teeworksusa] lấy bằng regex toàn trang:", img);
+      }
+    }
+    // 4) Fallback cuối cùng
+    if (!img) {
+      img = doc.querySelector('meta[property="og:image"]')?.content || "";
+      console.log("[teeworksusa] fallback og:image:", img);
+    }
+  } else {
+    img = doc.querySelector('meta[property="og:image"]')?.content || "";
+  }return {meta:{title,img},doc,url};}
 function abs(url,base){try{return new URL(url,base).href;}catch{return url;}}
 function findFirstProductFromHome(doc,base){const sel='.row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider';const c=doc.querySelector(sel);if(!c) return null;const a=c.querySelector('a[href*="/product/"]');return a?abs(a.getAttribute("href"),base):null;}
 function findNextProductUrlFromDetail(doc,baseUrl,occ){const all=Array.from(doc.querySelectorAll('li.prod-dropdown.has-dropdown a[rel="next"]'));if(!all.length) return null;const liList=all.map(a=>a.closest("li.prod-dropdown.has-dropdown")).filter(Boolean);const li=liList[occ-1];if(!li) return null;const a=li.querySelector('a[rel="next"]');if(!a) return null;return abs(a.getAttribute("href"),baseUrl);}

@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8" />
+<title>CrawlerV7 - V6.3 + AllshirtV2 (UI cột 2 scroll)</title>
+<style>
+  body { font-family: Arial, sans-serif; background:#f4f6fa; margin:0; padding:20px; text-align:center; }
+  h1 { font-size:22px; margin-bottom:20px; }
+  .domains {
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: 700px;
+    margin: 0 auto 20px auto;
+    align-items: start;
+  }
+  .col {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  #col2 {
+    overflow-y: auto;
+  }
+  .domain {
+    background:#fff; padding:10px 15px; border-radius:8px; border:1px solid #ddd;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  button { padding:6px 12px; cursor:pointer; border:none; border-radius:5px; background:#2563eb; color:white; }
+  button:hover { background:#1d4ed8; }
+  #status { margin:15px 0; color:#555; font-style:italic; }
+  .results { display:flex; flex-direction:column; gap:16px; align-items:center; }
+  .product { background:#fff; border:1px solid #ddd; padding:12px; border-radius:10px; width:720px; text-align:center; }
+  .product img { max-width:700px; height:auto; border-radius:8px; margin-bottom:8px; }
+  .title { font-weight:bold; font-size:16px; }
+</style>
+</head>
+<body>
+<h1><a href="/crawler/">Danh sách tools</a></h1>
+<h1>🧭 CrawlerV7</h1>
+
+<!-- Nhập domain để test -->
+<div style="margin-bottom:20px;">
+  <input type="text" id="domainInput" placeholder="Nhập domain để test (vd: abc.com)" style="padding:6px;width:250px;">
+  <button onclick="testDomain()">Load</button>
+</div>
+
+<div class="domains" id="domainList">
+  <div class="col" id="col1"></div>
+  <div class="col" id="col2"></div>
+</div>
+
+<div id="status">Chưa quét.</div>
+<div id="results" class="results"></div>
+
+<script>
+// --- Proxy config ---
+const cfProxy = "https://cors-proxy.trantpu.workers.dev/?url=";
+const scraperApiKey = "a81f3cb242118447359ed92553e82749"; // dùng cho dreameshirt từ sp 51
+
+// --- Domain gốc từ V6.3 ---
+const baseDomains = {
+  "teespix.com": { url: "https://teespix.com/", containerSel: ".row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: "div.product", titleSel: "a[aria-label]", titleAttr: "aria-label", imgSel: "img", imgAttr: "src" },
+  "techteesusa.com": { url: "https://techteesusa.com/", containerSel: "div.row.large-columns-5.medium-columns-3.small-columns-2.row-normal", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
+  "teeworksusa.com": { url: "https://teeworksusa.com/" }, 
+  "geekteesus.com": { url: "https://geekteesus.com/", containerSel: ["div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall.row-full-width","div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall"], itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
+  "dreameshirt.com": { url: "https://dreameshirt.com/" },
+  "uscraftedtees.com": { url: "https://uscraftedtees.com/" }
+};
+
+// --- Domain mới từ AllshirtV2 ---
+const allshirtDomains = [
+  "teehandus.com","teleteeshirt.com","teesprime.com","clickoneshirt.com",
+  "collectionpostertour.com","mercuryshirt.com","wildfoxtee.com","capitoneshirt.com",
+  "lovingsquad.com","trenvoteeco.com","arjomany.com","designatshop.com","melonashirt.com",
+  "trendingnowe.com","neoteeco.com","hornnastee.com","dukamala.com"
+];
+
+// --- Render danh sách domain ---
+function renderDomainList() {
+  const col1 = document.getElementById("col1");
+  const col2 = document.getElementById("col2");
+  col1.innerHTML = "";
+  col2.innerHTML = "";
+
+  Object.keys(baseDomains).forEach(k=>{
+    const div = document.createElement("div");
+    div.className="domain";
+    div.innerHTML=`<b>${k}</b> <button onclick="showProducts('${k}')">Show sản phẩm</button>`;
+    col1.appendChild(div);
+  });
+
+  allshirtDomains.forEach(d=>{
+    const div = document.createElement("div");
+    div.className="domain";
+    div.innerHTML=`<b>${d}</b> <button onclick="showAllshirt('${d}')">Show sản phẩm</button>`;
+    col2.appendChild(div);
+  });
+
+  adjustCol2Height();
+}
+
+// --- Điều chỉnh chiều cao cột 2 theo cột 1 ---
+function adjustCol2Height() {
+  const col1 = document.getElementById("col1");
+  const col2 = document.getElementById("col2");
+  col2.style.maxHeight = col1.offsetHeight + "px";
+}
+window.addEventListener("resize", adjustCol2Height);
+
+renderDomainList();
+
+// --- Fetch thông minh ---
+async function fetchSmart(url, index, domainKey) {
+  if (domainKey === "dreameshirt.com" && index > 50) {
+    const res = await fetch(`https://api.scraperapi.com/?api_key=${scraperApiKey}&url=${encodeURIComponent(url)}`);
+    if (res.ok) return res;
+    throw new Error("ScraperAPI lỗi " + res.status);
+  } else {
+    const res = await fetch(cfProxy + encodeURIComponent(url));
+    if (res.ok) return res;
+    throw new Error("CF proxy lỗi " + res.status);
+  }
+}
+
+// --- Logic chính cho domain cũ ---
+async function showProducts(domainKey) {
+  const cfg = baseDomains[domainKey];
+  document.getElementById("status").innerText = `Đang quét ${cfg.url}...`;
+  document.getElementById("results").innerHTML = "";
+
+  if (["dreameshirt.com","uscraftedtees.com","teeworksusa.com"].includes(domainKey)) {
+    try {
+      const list = await crawlSequential(domainKey, cfg.url, 100);
+      render(list);
+      document.getElementById("status").innerText = `Tìm thấy ${list.length} sản phẩm`;
+    } catch(e) {
+      document.getElementById("status").innerText="Lỗi: "+e.message;
+    }
+    return;
+  }
+
+  try {
+    const res = await fetch(cfProxy+encodeURIComponent(cfg.url));
+    const text = await res.text();
+    const doc = new DOMParser().parseFromString(text,"text/html");
+    let items=[];
+    if (Array.isArray(cfg.containerSel)) {
+      cfg.containerSel.forEach(sel=>{
+        const c=doc.querySelector(sel);
+        if(c){c.querySelectorAll(cfg.itemSel).forEach(it=>items.push(it));}
+      });
+    } else {
+      const c=doc.querySelector(cfg.containerSel);
+      if(c) items=c.querySelectorAll(cfg.itemSel);
+    }
+    const results=[];
+    items.forEach(it=>{
+      let title="";
+      if(cfg.titleAttr){const tEl=it.querySelector(cfg.titleSel); if(tEl) title=tEl.getAttribute(cfg.titleAttr)||"";}
+      else {const tEl=it.querySelector(cfg.titleSel); if(tEl) title=tEl.textContent.trim();}
+      let img=""; const imgEl=it.querySelector(cfg.imgSel); if(imgEl) img=imgEl.getAttribute(cfg.imgAttr)||"";
+      results.push({title,img});
+    });
+    render(results);
+    document.getElementById("status").innerText=`Tìm thấy ${results.length} sản phẩm`;
+  } catch(e){document.getElementById("status").innerText="Lỗi: "+e.message;}
+}
+
+// --- Logic cho domain AllshirtV2 ---
+async function showAllshirt(domain) {
+  document.getElementById("status").innerText=`Đang tải từ ${domain}...`;
+  document.getElementById("results").innerHTML="";
+  try {
+    const res=await fetch(`https://${domain}/wp-json/wp/v2/product?orderby=date&order=desc&per_page=100`);
+    if(!res.ok) throw new Error("HTTP "+res.status);
+    const products=await res.json();
+    const results=[];
+    products.forEach(p=>{
+      let img="https://via.placeholder.com/200";
+      if(p.content&&p.content.rendered){
+        const tmp=document.createElement("div");
+        tmp.innerHTML=p.content.rendered;
+        const imgTag=tmp.querySelector("img");
+        if(imgTag&&imgTag.src) img=imgTag.src;
+      }
+      results.push({title:p.title.rendered,img});
+    });
+    render(results);
+    document.getElementById("status").innerText=`${domain}: ${results.length} sản phẩm`;
+  } catch(e){
+    document.getElementById("status").innerText=`Lỗi ${domain}: ${e.message}`;
+  }
+}
+
+// --- Nhập domain test ---
+function testDomain() {
+  const d=document.getElementById("domainInput").value.trim();
+  if(!d) return;
+  showAllshirt(d);
+}
+
+// --- Helpers ---
+async function crawlSequential(domainKey, homeUrl, targetCount=100){
+  const results=[]; const seen=new Set();
+  let firstUrl;
+  if(domainKey==="teeworksusa.com"){
+    const homeDoc=await fetchDocSmart(homeUrl,1,domainKey);
+    const c=homeDoc.querySelector('.elementor-element.elementor-element-26e4f04');
+    if(c){const a=c.querySelector('a[href*="/product/"]'); if(a) firstUrl=abs(a.getAttribute("href"),homeUrl);}
+  } else {
+    const homeDoc=await fetchDocSmart(homeUrl,1,domainKey);
+    firstUrl=findFirstProductFromHome(homeDoc,homeUrl);
+  }
+  if(!firstUrl) throw new Error("Không tìm thấy SP đầu tiên");
+  let {meta,doc,url:curUrl}=await fetchProductMetaAndDocSmart(firstUrl,1,domainKey);
+  if(meta){results.push(meta);seen.add(curUrl);render(results);}
+  for(let i=2;i<=targetCount;i++){
+    let nextUrl;
+    if(domainKey==="teeworksusa.com"){
+      const prevDiv=doc.querySelector("div.product-prev a[href*='/product/']");
+      if(!prevDiv) break; nextUrl=abs(prevDiv.getAttribute("href"),curUrl);
+    } else {
+      nextUrl=findNextProductUrlFromDetail(doc,curUrl,(i===2)?1:2);
+    }
+    if(!nextUrl||seen.has(nextUrl)) break;
+    const next=await fetchProductMetaAndDocSmart(nextUrl,i,domainKey);
+    if(!next.meta) break;
+    results.push(next.meta); seen.add(next.url); curUrl=next.url; doc=next.doc;
+    render(results); document.getElementById("status").innerText=`${domainKey}: ${results.length}/${targetCount}`;
+  }
+  return results;
+}
+async function fetchDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();return new DOMParser().parseFromString(html,"text/html");}
+async function fetchProductMetaAndDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();const doc=new DOMParser().parseFromString(html,"text/html");const title=doc.querySelector('meta[property="og:title"]')?.content||doc.querySelector("h1")?.textContent?.trim()||"";const img=doc.querySelector('meta[property="og:image"]')?.content||"";return {meta:{title,img},doc,url};}
+function abs(url,base){try{return new URL(url,base).href;}catch{return url;}}
+function findFirstProductFromHome(doc,base){const sel='.row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider';const c=doc.querySelector(sel);if(!c) return null;const a=c.querySelector('a[href*="/product/"]');return a?abs(a.getAttribute("href"),base):null;}
+function findNextProductUrlFromDetail(doc,baseUrl,occ){const all=Array.from(doc.querySelectorAll('li.prod-dropdown.has-dropdown a[rel="next"]'));if(!all.length) return null;const liList=all.map(a=>a.closest("li.prod-dropdown.has-dropdown")).filter(Boolean);const li=liList[occ-1];if(!li) return null;const a=li.querySelector('a[rel="next"]');if(!a) return null;return abs(a.getAttribute("href"),baseUrl);}
+function render(list){const box=document.getElementById("results");box.innerHTML="";list.forEach((p,i)=>{const div=document.createElement("div");div.className="product";div.innerHTML=`<div><b>#${i+1}</b></div>${p.img?`<img src="${p.img}" />`:"(no image)"}<div class="title">${p.title}</div>`;box.appendChild(div);});}
+</script>
+</body>
+</html>

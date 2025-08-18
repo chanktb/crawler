@@ -125,8 +125,12 @@ async function showProducts(domainKey) {
       }
 
       let img = "";
-      const imgEl = it.querySelector(cfg.imgSel);
-      if (imgEl) img = imgEl.getAttribute(cfg.imgAttr) || "";
+      let imgEls = it.querySelectorAll(cfg.imgSel);
+      if (imgEls.length > 1 && domainKey === 'teeworksusa') {
+        img = imgEls[1].getAttribute(cfg.imgAttr) || "";
+      } else if (imgEls.length > 0) {
+        img = imgEls[0].getAttribute(cfg.imgAttr) || "";
+      }
 
       results.push({title, img});
     });

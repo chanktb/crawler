@@ -110,6 +110,10 @@ async function loadProducts(domain, page = 1) {
         tempDiv.innerHTML = product.content.rendered;
         const imgTag = tempDiv.querySelector('img');
         if (imgTag && imgTag.src) imgUrl = imgTag.src;
+      // ✅ Patch riêng cho teehandus.com
+      if (domain === "teehandus.com" && imgUrl.includes("-t-shirt.jpg")) {
+        imgUrl = imgUrl.replace("-t-shirt.jpg", "-sweater.jpg");
+      }
       }
 
       const card = document.createElement('div');

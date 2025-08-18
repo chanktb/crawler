@@ -252,23 +252,23 @@ async function crawlSequential(domainKey, homeUrl, targetCount=100){
 async function fetchDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();return new DOMParser().parseFromString(html,"text/html");}
 async function fetchProductMetaAndDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();const doc=new DOMParser().parseFromString(html,"text/html");const title=doc.querySelector('meta[property="og:title"]')?.content||doc.querySelector("h1")?.textContent?.trim()||"";let img = "";
   if (domainKey === "teeworksusa.com") {
-    // 1) Ưu tiên lấy đúng ảnh gốc ornaments-black.jpg trong gallery
-    const foundDiv = doc.querySelector('.woocommerce-product-gallery__image[data-src$="ornaments-black.jpg"]');
+    // 1) Ưu tiên lấy đúng ảnh gốc posters-black.jpg trong gallery
+    const foundDiv = doc.querySelector('.woocommerce-product-gallery__image[data-src$="posters-black.jpg"]');
     if (foundDiv) {
       img = foundDiv.getAttribute("data-src");
       console.log("[teeworksusa] lấy từ data-src:", img);
     }
     // 2) Thử lấy từ thẻ <a>
     if (!img) {
-      const foundA = doc.querySelector('.woocommerce-product-gallery__image a[href$="ornaments-black.jpg"]');
+      const foundA = doc.querySelector('.woocommerce-product-gallery__image a[href$="posters-black.jpg"]');
       if (foundA) {
         img = foundA.getAttribute("href");
         console.log("[teeworksusa] lấy từ <a href>:", img);
       }
     }
-    // 3) Nếu vẫn chưa thấy, quét toàn bộ HTML để tìm URL chứa ornaments-black.jpg (dù ở script/meta)
+    // 3) Nếu vẫn chưa thấy, quét toàn bộ HTML để tìm URL chứa posters-black.jpg (dù ở script/meta)
     if (!img) {
-      const m = (html.match(/https?:\/\/[^"'\s>]*ornaments-black\.jpg/gi) || [])[0];
+      const m = (html.match(/https?:\/\/[^"'\s>]*posters-black\.jpg/gi) || [])[0];
       if (m) {
         img = m;
         console.log("[teeworksusa] lấy bằng regex toàn trang:", img);

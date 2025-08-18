@@ -251,7 +251,7 @@ async function crawlSequential(domainKey, homeUrl, targetCount=100){
 }
 async function fetchDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();return new DOMParser().parseFromString(html,"text/html");}
 async function fetchProductMetaAndDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();const doc=new DOMParser().parseFromString(html,"text/html");const title=doc.querySelector('meta[property="og:title"]')?.content||doc.querySelector("h1")?.textContent?.trim()||"";let img = "";
-if (domainKey === "teeworksusa.com") {
+  if (domainKey === "teeworksusa.com") {
   // 1) Ưu tiên lấy đúng ảnh gốc posters-black.jpg trong gallery
   let foundDiv = doc.querySelector('.woocommerce-product-gallery__image[data-src$="posters-black.jpg"]');
   if (foundDiv) {
@@ -301,12 +301,6 @@ if (domainKey === "teeworksusa.com") {
     img = doc.querySelector('meta[property="og:image"]')?.content || "";
     console.log("[teeworksusa] fallback og:image:", img);
   }
-}
-    // 4) Fallback cuối cùng
-    if (!img) {
-      img = doc.querySelector('meta[property="og:image"]')?.content || "";
-      console.log("[teeworksusa] fallback og:image:", img);
-    }
   } else {
     img = doc.querySelector('meta[property="og:image"]')?.content || "";
   }return {meta:{title,img},doc,url};}

@@ -62,6 +62,12 @@ const scraperApiKey = "a81f3cb242118447359ed92553e82749"; // dùng cho dreameshi
 const baseDomains = {
   
   
+"teespix.com": { url: "https://teespix.com/", containerSel: ".row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: "div.product", titleSel: "a[aria-label]", titleAttr: "aria-label", imgSel: "img", imgAttr: "src" },
+  "techteesusa.com": { url: "https://techteesusa.com/", containerSel: "div.row.large-columns-5.medium-columns-3.small-columns-2.row-normal", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
+  "teeworksusa.com": { url: "https://teeworksusa.com/" }, 
+  "geekteesus.com": { url: "https://geekteesus.com/", containerSel: ["div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall.row-full-width","div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall"], itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
+  "dreameshirt.com": { url: "https://dreameshirt.com/" },
+  "uscraftedtees.com": { url: "https://uscraftedtees.com/" },
   "eteeclothing.com": { 
     url: "https://eteeclothing.com/", 
     containerSel: ".row.large-columns-6.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", 
@@ -77,13 +83,7 @@ const baseDomains = {
     titleSel: "p.name.product-title a", 
     imgSel: ".box-image img:nth-child(2)", 
     imgAttr: "src" 
-  },
-"teespix.com": { url: "https://teespix.com/", containerSel: ".row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: "div.product", titleSel: "a[aria-label]", titleAttr: "aria-label", imgSel: "img", imgAttr: "src" },
-  "techteesusa.com": { url: "https://techteesusa.com/", containerSel: "div.row.large-columns-5.medium-columns-3.small-columns-2.row-normal", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
-  "teeworksusa.com": { url: "https://teeworksusa.com/" }, 
-  "geekteesus.com": { url: "https://geekteesus.com/", containerSel: ["div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall.row-full-width","div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall"], itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
-  "dreameshirt.com": { url: "https://dreameshirt.com/" },
-  "uscraftedtees.com": { url: "https://uscraftedtees.com/" }
+  }
 };
 
 // --- Domain mới từ AllshirtV2 ---

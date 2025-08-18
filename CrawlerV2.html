@@ -1,106 +1,199 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-  <h1><a href="/crawler/">Danh sách tools</a></h1>
-<title>Techteesusa lấy nhanh 50 sp trang chủ qua Save As</title>
+<meta charset="utf-8" />
+<title>CrawlerV7 - All in One</title>
 <style>
-  body { font-family: Arial, sans-serif; max-width: 900px; margin: auto; }
-  h2 { font-size: 20px; margin-bottom: 10px; }
-  .instructions { font-size: 14px; color: #444; background: #f9f9f9; padding: 10px; border: 1px solid #ddd; margin-bottom: 20px; }
-  input, button { padding: 8px; margin: 5px 0; width: 100%; }
-  button { cursor: pointer; background: #28a745; color: white; border: none; }
-  .product { margin-bottom: 30px; border-bottom: 1px solid #ccc; padding-bottom: 20px; }
-  .product img { max-width: 700px; display: block; }
-  .running { font-weight: bold; color: red; margin-top: 5px; display: none; }
+  body { font-family: Arial, sans-serif; background:#f4f6fa; margin:0; padding:20px; text-align:center; }
+  h1 { font-size:22px; margin-bottom:20px; }
+  .domains {
+    //display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    max-width: 746px;
+    margin: 0 auto 20px auto;
+    align-items: start;
+  }
+  .col {
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  #col2 {
+    overflow-y: auto;
+  }
+  .domain {
+    background:#fff; padding:10px 15px; border-radius:8px; border:1px solid #ddd;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  button { padding:6px 12px; cursor:pointer; border:none; border-radius:5px; background:#2563eb; color:white; }
+  button:hover { background:#1d4ed8; }
+  #status { margin:15px 0; color:#555; font-style:italic; }
+  .results { display:flex; flex-direction:column; gap:16px; align-items:center; }
+  .product { background:#fff; border:1px solid #ddd; padding:12px; border-radius:10px; width:720px; text-align:center; }
+  .product img { max-width:700px; height:auto; border-radius:8px; margin-bottom:8px; }
+  .title { font-weight:bold; font-size:16px; }
 </style>
 </head>
 <body>
+<h1><a href="javascript:location.reload()">TẢI LẠI TRANG</a></h1>
+<h1>TeeworksUSA Auto Run</h1>
 
-<h2>Techteesusa lấy nhanh 50 sp trang chủ qua Save As</h2>
-<div class="instructions">
-  <p><strong>Hướng dẫn sử dụng:</strong></p>
-  <ol>
-    <li>Truy cập <a href="https://www.scraperapi.com/" target="_blank">ScraperAPI</a> và đăng ký để lấy API key (miễn phí).</li>
-    <li>Truy cập website cần crawl, mở sản phẩm mới nhất và copy URL của nó.</li>
-    <li>Dán API key và URL sản phẩm vào bên dưới, sau đó bấm <strong>Bắt đầu</strong>.</li>
-  </ol>
+<div class="domains" id="domainList">
+  <div class="col" id="col1"></div>
+  <div class="col" id="col2"></div>
 </div>
 
-<label>Nhập API Key:</label>
-<input type="text" id="apiKey" placeholder="Nhập API key" value="a81f3cb242118447359ed92553e82749">
-
-<label>Nhập URL sản phẩm:</label>
-<input type="text" id="startUrl" placeholder="Dán URL sản phẩm..." value="https://teeworksusa.com/product/the-studbudz-courtney-williams-and-natisha-hiedeman-shirt/">
-
-<button id="startBtn">Bắt đầu</button>
-<div class="running" id="runningStatus">Đang chạy...</div>
-
-<div id="results"></div>
+<div id="status">Chưa quét.</div>
+<div id="results" class="results"></div>
 
 <script>
-async function fetchProduct(url, apiKey, index) {
-  const apiUrl = `https://api.scraperapi.com?api_key=${apiKey}&url=${encodeURIComponent(url)}`;
-  const res = await fetch(apiUrl);
-  const html = await res.text();
-  const doc = new DOMParser().parseFromString(html, "text/html");
+// --- Proxy config ---
+const cfProxy = "https://cors-proxy.trantpu.workers.dev/?url=";
+const scraperApiKey = "a81f3cb242118447359ed92553e82749"; // dùng cho dreameshirt từ sp 51
 
-  const title = doc.querySelector('meta[property="og:title"]')?.content || "Không tìm thấy tiêu đề";
-  const img = doc.querySelector('meta[property="og:image"]')?.content || "";
+// --- Domain gốc từ V6.3 ---
+const baseDomains = {
+  "teeworksusa.com": { url: "https://teeworksusa.com/" }
+};
 
-  // Thêm sản phẩm vào kết quả
-  const container = document.getElementById("results");
-  const productDiv = document.createElement("div");
-  productDiv.className = "product";
-  productDiv.innerHTML = `<div><strong>#${index}</strong></div>
-                          <img src="${img}" alt="${title}">
-                          <div>${title}</div>`;
-  container.appendChild(productDiv);
 
-  // Tìm URL tiếp theo
-  let nextLink = doc.querySelector('.product-prev a')?.href;
-  if (!nextLink) {
-    nextLink = doc.querySelector('a[rel="next"]')?.href;
+
+function renderDomainList() {
+  const col1 = document.getElementById("col1");
+  col1.innerHTML = "";
+  const div = document.createElement("div");
+  div.className="domain";
+  div.innerHTML=`<b>teeworksusa.com</b> <button onclick="showProducts('teeworksusa.com')">Show sản phẩm</button>`;
+  col1.appendChild(div);
+}
+renderDomainList();
+
+// --- Fetch thông minh ---
+async function fetchSmart(url, index, domainKey) {
+  if (domainKey === "dreameshirt.com" && index > 50) {
+    const res = await fetch(`https://api.scraperapi.com/?api_key=${scraperApiKey}&url=${encodeURIComponent(url)}`);
+    if (res.ok) return res;
+    throw new Error("ScraperAPI lỗi " + res.status);
+  } else {
+    const res = await fetch(cfProxy + encodeURIComponent(url));
+    if (res.ok) return res;
+    throw new Error("CF proxy lỗi " + res.status);
   }
-
-  return nextLink;
 }
 
-document.getElementById("startBtn").addEventListener("click", async () => {
-  const apiKey = document.getElementById("apiKey").value.trim();
-  let url = document.getElementById("startUrl").value.trim();
+// --- Logic chính cho domain cũ ---
+async function showProducts(domainKey) {
+  const cfg = baseDomains[domainKey];
+  document.getElementById("status").innerText = `Đang quét ${cfg.url}...`;
+  document.getElementById("results").innerHTML = "";
 
-  if (!apiKey || !url) {
-    alert("Vui lòng nhập API key và URL sản phẩm!");
+  if (["dreameshirt.com","uscraftedtees.com","teeworksusa.com"].includes(domainKey)) {
+    try {
+      const list = await crawlSequential(domainKey, cfg.url, 100);
+      render(list);
+      document.getElementById("status").innerText = `Tìm thấy ${list.length} sản phẩm`;
+    } catch(e) {
+      document.getElementById("status").innerText="Lỗi: "+e.message;
+    }
     return;
   }
 
-  document.getElementById("results").innerHTML = "";
-  document.getElementById("runningStatus").style.display = "block";
-
-  let index = 1;
-  while (url && index <= 100) {
-    try {
-      url = await fetchProduct(url, apiKey, index);
-      index++;
-    } catch (err) {
-      console.error(err);
-      break;
+  try {
+    const res = await fetch(cfProxy+encodeURIComponent(cfg.url));
+    const text = await res.text();
+    const doc = new DOMParser().parseFromString(text,"text/html");
+    let items=[];
+    if (Array.isArray(cfg.containerSel)) {
+      cfg.containerSel.forEach(sel=>{
+        const c=doc.querySelector(sel);
+        if(c){c.querySelectorAll(cfg.itemSel).forEach(it=>items.push(it));}
+      });
+    } else {
+      const c=doc.querySelector(cfg.containerSel);
+      if(c) items=c.querySelectorAll(cfg.itemSel);
     }
+    const results=[];
+    items.forEach(it=>{
+      let title="";
+      if(cfg.titleAttr){const tEl=it.querySelector(cfg.titleSel); if(tEl) title=tEl.getAttribute(cfg.titleAttr)||"";}
+      else {const tEl=it.querySelector(cfg.titleSel); if(tEl) title=tEl.textContent.trim();}
+      let img=""; const imgEl=it.querySelector(cfg.imgSel); if(imgEl) img=imgEl.getAttribute(cfg.imgAttr)||"";
+      results.push({title,img});
+    });
+    render(results);
+    document.getElementById("status").innerText=`Tìm thấy ${results.length} sản phẩm`;
+  } catch(e){document.getElementById("status").innerText="Lỗi: "+e.message;}
+}
+
+// --- Helpers ---
+async function crawlSequential(domainKey, homeUrl, targetCount=100){
+  const results=[]; const seen=new Set();
+  let firstUrl;
+  if(domainKey==="teeworksusa.com"){
+    const homeDoc=await fetchDocSmart(homeUrl,1,domainKey);
+    const c=homeDoc.querySelector('.elementor-element.elementor-element-26e4f04');
+    if(c){const a=c.querySelector('a[href*="/product/"]'); if(a) firstUrl=abs(a.getAttribute("href"),homeUrl);}
+  } else {
+    const homeDoc=await fetchDocSmart(homeUrl,1,domainKey);
+    firstUrl=findFirstProductFromHome(homeDoc,homeUrl);
   }
-
-  document.getElementById("runningStatus").style.display = "none";
-});
+  if(!firstUrl) throw new Error("Không tìm thấy SP đầu tiên");
+  let {meta,doc,url:curUrl}=await fetchProductMetaAndDocSmart(firstUrl,1,domainKey);
+  if(meta){results.push(meta);seen.add(curUrl);render(results);}
+  for(let i=2;i<=targetCount;i++){
+    let nextUrl;
+    if(domainKey==="teeworksusa.com"){
+      const prevDiv=doc.querySelector("div.product-prev a[href*='/product/']");
+      if(!prevDiv) break; nextUrl=abs(prevDiv.getAttribute("href"),curUrl);
+    } else {
+      nextUrl=findNextProductUrlFromDetail(doc,curUrl,(i===2)?1:2);
+    }
+    if(!nextUrl||seen.has(nextUrl)) break;
+    const next=await fetchProductMetaAndDocSmart(nextUrl,i,domainKey);
+    if(!next.meta) break;
+    results.push(next.meta); seen.add(next.url); curUrl=next.url; doc=next.doc;
+    render(results); document.getElementById("status").innerText=`${domainKey}: ${results.length}/${targetCount}`;
+  }
+  return results;
+}
+async function fetchDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();return new DOMParser().parseFromString(html,"text/html");}
+async function fetchProductMetaAndDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();const doc=new DOMParser().parseFromString(html,"text/html");const title=doc.querySelector('meta[property="og:title"]')?.content||doc.querySelector("h1")?.textContent?.trim()||"";let img = "";
+  if (domainKey === "teeworksusa.com") {
+    // 1) Ưu tiên lấy đúng ảnh gốc posters-black.jpg trong gallery
+    const foundDiv = doc.querySelector('.woocommerce-product-gallery__image[data-src$="posters-black.jpg"]');
+    if (foundDiv) {
+      img = foundDiv.getAttribute("data-src");
+      console.log("[teeworksusa] lấy từ data-src:", img);
+    }
+    // 2) Thử lấy từ thẻ <a>
+    if (!img) {
+      const foundA = doc.querySelector('.woocommerce-product-gallery__image a[href$="posters-black.jpg"]');
+      if (foundA) {
+        img = foundA.getAttribute("href");
+        console.log("[teeworksusa] lấy từ <a href>:", img);
+      }
+    }
+    // 3) Nếu vẫn chưa thấy, quét toàn bộ HTML để tìm URL chứa posters-black.jpg (dù ở script/meta)
+    if (!img) {
+      const m = (html.match(/https?:\/\/[^"'\s>]*posters-black\.jpg/gi) || [])[0];
+      if (m) {
+        img = m;
+        console.log("[teeworksusa] lấy bằng regex toàn trang:", img);
+      }
+    }
+    // 4) Fallback cuối cùng
+    if (!img) {
+      img = doc.querySelector('meta[property="og:image"]')?.content || "";
+      console.log("[teeworksusa] fallback og:image:", img);
+    }
+  } else {
+    img = doc.querySelector('meta[property="og:image"]')?.content || "";
+  }return {meta:{title,img},doc,url};}
+function abs(url,base){try{return new URL(url,base).href;}catch{return url;}}
+function findFirstProductFromHome(doc,base){const sel='.row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider';const c=doc.querySelector(sel);if(!c) return null;const a=c.querySelector('a[href*="/product/"]');return a?abs(a.getAttribute("href"),base):null;}
+function findNextProductUrlFromDetail(doc,baseUrl,occ){const all=Array.from(doc.querySelectorAll('li.prod-dropdown.has-dropdown a[rel="next"]'));if(!all.length) return null;const liList=all.map(a=>a.closest("li.prod-dropdown.has-dropdown")).filter(Boolean);const li=liList[occ-1];if(!li) return null;const a=li.querySelector('a[rel="next"]');if(!a) return null;return abs(a.getAttribute("href"),baseUrl);}
+function render(list){const box=document.getElementById("results");box.innerHTML="";list.forEach((p,i)=>{const div=document.createElement("div");div.className="product";div.innerHTML=`<div><b>#${i+1}</b></div>${p.img?`<img src="${p.img}" />`:"(no image)"}<div class="title">${p.title}</div>`;box.appendChild(div);});}
 </script>
-
 </body>
 </html>
-
-
-
-
-
-
-
-
-

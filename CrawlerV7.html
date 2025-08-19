@@ -6,33 +6,18 @@
 <style>
   body { font-family: Arial, sans-serif; background:#f4f6fa; margin:0; padding:20px; text-align:center; }
   h1 { font-size:22px; margin-bottom:20px; }
-  .domains {
-    display:grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    max-width: 746px;
-    margin: 0 auto 20px auto;
-    align-items: start;
-  }
-  .col {
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-  }
-  #col2 {
-    overflow-y: auto;
-  }
-  .domain {
-    background:#fff; padding:10px 15px; border-radius:8px; border:1px solid #ddd;
-    display:flex; justify-content:space-between; align-items:center;
-  }
+  .domains { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 746px; margin: 0 auto 20px auto; align-items: start; }
+  .col { display:flex; flex-direction:column; gap:10px; }
+  #col2 { overflow-y: auto; }
+  .domain { background:#fff; padding:10px 15px; border-radius:8px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; }
   button { padding:6px 12px; cursor:pointer; border:none; border-radius:5px; background:#2563eb; color:white; }
   button:hover { background:#1d4ed8; }
   #status { margin:15px 0; color:#555; font-style:italic; }
   .results { display:flex; flex-direction:column; gap:16px; align-items:center; }
   .product { background:#fff; border:1px solid #ddd; padding:12px; border-radius:10px; width:720px; text-align:center; }
   .product img { max-width:700px; height:auto; border-radius:8px; margin-bottom:8px; }
-  .title { font-weight:bold; font-size:16px; }
+  .title { font-weight:bold; font-size:16px; margin-bottom:4px; }
+  .url { font-size:13px; color:#2563eb; word-break:break-all; }
 </style>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-487BB6S2C2"></script>
@@ -70,39 +55,18 @@ const scraperApiKey = "a81f3cb242118447359ed92553e82749"; // dùng cho dreameshi
 
 // --- Domain gốc từ V6.3 ---
 const baseDomains = {
-  
-  
-"teespix.com": { url: "https://teespix.com/", containerSel: ".row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: "div.product", titleSel: "a[aria-label]", titleAttr: "aria-label", imgSel: "img", imgAttr: "src" },
+  "teespix.com": { url: "https://teespix.com/", containerSel: ".row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: "div.product", titleSel: "a[aria-label]", titleAttr: "aria-label", imgSel: "img", imgAttr: "src" },
   "techteesusa.com": { url: "https://techteesusa.com/", containerSel: "div.row.large-columns-5.medium-columns-3.small-columns-2.row-normal", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
   "teeworksusa.com": { url: "https://teeworksusa.com/" }, 
   "geekteesus.com": { url: "https://geekteesus.com/", containerSel: ["div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall.row-full-width","div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall"], itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
   "dreameshirt.com": { url: "https://dreameshirt.com/" },
   "uscraftedtees.com": { url: "https://uscraftedtees.com/" },
-  "eteeclothing.com": { 
-    url: "https://eteeclothing.com/", 
-    containerSel: ".row.large-columns-6.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", 
-    itemSel: ".product-small.box", 
-    titleSel: "p.name.product-title a", 
-    imgSel: "img", 
-    imgAttr: "src" 
-  },
-"nowbestshirt.com": { 
-    url: "https://nowbestshirt.com/", 
-    containerSel: ".row.large-columns-5.medium-columns-3.small-columns-2.row-small", 
-    itemSel: ".product-small.box", 
-    titleSel: "p.name.product-title a", 
-    imgSel: ".box-image img:nth-child(2)", 
-    imgAttr: "src" 
-  }
+  "eteeclothing.com": { url: "https://eteeclothing.com/", containerSel: ".row.large-columns-6.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
+  "nowbestshirt.com": { url: "https://nowbestshirt.com/", containerSel: ".row.large-columns-5.medium-columns-3.small-columns-2.row-small", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: ".box-image img:nth-child(2)", imgAttr: "src" }
 };
 
 // --- Domain mới từ AllshirtV2 ---
-const allshirtDomains = [
-  "teehandus.com","teleteeshirt.com","teesprime.com","clickoneshirt.com",
-  "melonashirt.com","mercuryshirt.com","wildfoxtee.com","capitoneshirt.com",
-  "lovingsquad.com","trenvoteeco.com","arjomany.com","designatshop.com","collectionpostertour.com",
-  "trendingnowe.com","neoteeco.com","hornnastee.com","dukamala.com", "trendteeshirts.com"
-];
+const allshirtDomains = ["teehandus.com","teleteeshirt.com","teesprime.com","clickoneshirt.com","melonashirt.com","mercuryshirt.com","wildfoxtee.com","capitoneshirt.com","lovingsquad.com","trenvoteeco.com","arjomany.com","designatshop.com","collectionpostertour.com","trendingnowe.com","neoteeco.com","hornnastee.com","dukamala.com", "trendteeshirts.com"];
 
 // --- Render danh sách domain ---
 function renderDomainList() {
@@ -128,35 +92,25 @@ function renderDomainList() {
   adjustCol2Height();
 }
 
-// --- Điều chỉnh chiều cao cột 2 theo cột 1 ---
 function adjustCol2Height() {
   const col1 = document.getElementById("col1");
   const col2 = document.getElementById("col2");
   col2.style.maxHeight = col1.offsetHeight + "px";
 }
 window.addEventListener("resize", adjustCol2Height);
-
 renderDomainList();
 
 // --- Fetch thông minh ---
 async function fetchSmart(url, index, domainKey) {
   if (domainKey === "dreameshirt.com") {
-    // Ưu tiên CF Proxy
     try {
       const res = await fetch(cfProxy + encodeURIComponent(url));
       if (res.ok) return res;
-      console.warn(`[dreameshirt] CF proxy lỗi ${res.status}, fallback ScraperAPI`);
-    } catch (e) {
-      console.warn(`[dreameshirt] CF proxy exception: ${e.message}, fallback ScraperAPI`);
-    }
-
-    // Nếu CF lỗi thì mới dùng ScraperAPI
+    } catch (e) {}
     const res2 = await fetch(`https://api.scraperapi.com/?api_key=${scraperApiKey}&url=${encodeURIComponent(url)}`);
     if (res2.ok) return res2;
     throw new Error("ScraperAPI lỗi " + res2.status);
-
   } else {
-    // Các domain khác vẫn y nguyên
     const res = await fetch(cfProxy + encodeURIComponent(url));
     if (res.ok) return res;
     throw new Error("CF proxy lỗi " + res.status);
@@ -224,7 +178,6 @@ async function showAllshirt(domain) {
         const imgTag=tmp.querySelector("img");
         if(imgTag&&imgTag.src) img=imgTag.src;
       }
-      // ✅ Chỉ áp dụng cho teehandus.com
       if(domain === "teehandus.com" && img.includes("-t-shirt.jpg")) {
         img = img.replace("-t-shirt.jpg", "-sweater.jpg");
       }
@@ -237,7 +190,6 @@ async function showAllshirt(domain) {
   }
 }
 
-// --- Nhập domain test ---
 function testDomain() {
   const d=document.getElementById("domainInput").value.trim();
   if(!d) return;
@@ -275,65 +227,48 @@ async function crawlSequential(domainKey, homeUrl, targetCount=100){
   }
   return results;
 }
-async function fetchDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();return new DOMParser().parseFromString(html,"text/html");}
-async function fetchProductMetaAndDocSmart(url,index,domainKey){const res=await fetchSmart(url,index,domainKey);const html=await res.text();const doc=new DOMParser().parseFromString(html,"text/html");const title=doc.querySelector('meta[property="og:title"]')?.content||doc.querySelector("h1")?.textContent?.trim()||"";let img = "";
+
+async function fetchDocSmart(url,index,domainKey){
+  const res=await fetchSmart(url,index,domainKey);
+  const html=await res.text();
+  return new DOMParser().parseFromString(html,"text/html");
+}
+
+async function fetchProductMetaAndDocSmart(url,index,domainKey){
+  const res=await fetchSmart(url,index,domainKey);
+  const html=await res.text();
+  const doc=new DOMParser().parseFromString(html,"text/html");
+  const title=doc.querySelector('meta[property="og:title"]')?.content||doc.querySelector("h1")?.textContent?.trim()||"";
+  let img = "";
+
   if (domainKey === "teeworksusa.com") {
-  // 1) Ưu tiên lấy đúng ảnh gốc posters-black.jpg trong gallery
-  let foundDiv = doc.querySelector('.woocommerce-product-gallery__image[data-src$="posters-black.jpg"]');
-  if (foundDiv) {
-    img = foundDiv.getAttribute("data-src");
-    console.log("[teeworksusa] lấy từ data-src posters-black:", img);
-  }
-  if (!img) {
-    let foundA = doc.querySelector('.woocommerce-product-gallery__image a[href$="posters-black.jpg"]');
-    if (foundA) {
-      img = foundA.getAttribute("href");
-      console.log("[teeworksusa] lấy từ <a href> posters-black:", img);
+    const candidates = ["Posters-black.jpg","white-poster.jpg","White-poster.jpg","Posters-white.jpg","poster.jpg"];
+    for (let c of candidates) {
+      const found = html.match(new RegExp(`https?:\\/\\/[^"'\\s>]*${c.replace(".","\\.")}`,"i"));
+      if (found) { img = found[0]; break; }
     }
-  }
-  if (!img) {
-    const m = (html.match(/https?:\/\/[^"'\s>]*posters-black\.jpg/gi) || [])[0];
-    if (m) {
-      img = m;
-      console.log("[teeworksusa] regex posters-black:", img);
-    }
-  }
-
-  // 2) Nếu vẫn chưa có thì thử với white-poster.jpg
-  if (!img) {
-    foundDiv = doc.querySelector('.woocommerce-product-gallery__image[data-src$="white-poster.jpg"]');
-    if (foundDiv) {
-      img = foundDiv.getAttribute("data-src");
-      console.log("[teeworksusa] lấy từ data-src white-poster:", img);
-    }
-  }
-  if (!img) {
-    const foundA2 = doc.querySelector('.woocommerce-product-gallery__image a[href$="white-poster.jpg"]');
-    if (foundA2) {
-      img = foundA2.getAttribute("href");
-      console.log("[teeworksusa] lấy từ <a href> white-poster:", img);
-    }
-  }
-  if (!img) {
-    const m2 = (html.match(/https?:\/\/[^"'\s>]*white-poster\.jpg/gi) || [])[0];
-    if (m2) {
-      img = m2;
-      console.log("[teeworksusa] regex white-poster:", img);
-    }
-  }
-
-  // 3) Fallback cuối cùng
-  if (!img) {
-    img = doc.querySelector('meta[property="og:image"]')?.content || "";
-    console.log("[teeworksusa] fallback og:image:", img);
-  }
+    if (!img) img = doc.querySelector('meta[property="og:image"]')?.content || "";
   } else {
     img = doc.querySelector('meta[property="og:image"]')?.content || "";
-  }return {meta:{title,img},doc,url};}
+  }
+
+  return {meta:{title,img,url},doc,url};
+}
+
 function abs(url,base){try{return new URL(url,base).href;}catch{return url;}}
 function findFirstProductFromHome(doc,base){const sel='.row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider';const c=doc.querySelector(sel);if(!c) return null;const a=c.querySelector('a[href*="/product/"]');return a?abs(a.getAttribute("href"),base):null;}
 function findNextProductUrlFromDetail(doc,baseUrl,occ){const all=Array.from(doc.querySelectorAll('li.prod-dropdown.has-dropdown a[rel="next"]'));if(!all.length) return null;const liList=all.map(a=>a.closest("li.prod-dropdown.has-dropdown")).filter(Boolean);const li=liList[occ-1];if(!li) return null;const a=li.querySelector('a[rel="next"]');if(!a) return null;return abs(a.getAttribute("href"),baseUrl);}
-function render(list){const box=document.getElementById("results");box.innerHTML="";list.forEach((p,i)=>{const div=document.createElement("div");div.className="product";div.innerHTML=`<div><b>#${i+1}</b></div>${p.img?`<img src="${p.img}" />`:"(no image)"}<div class="title">${p.title}</div>`;box.appendChild(div);});}
+
+function render(list){
+  const box=document.getElementById("results");
+  box.innerHTML="";
+  list.forEach((p,i)=>{
+    const div=document.createElement("div");
+    div.className="product";
+    div.innerHTML=`<div><b>#${i+1}</b></div>${p.img?`<img src="${p.img}" />`:"(no image)"}<div class="title">${p.title}</div><div class="url">${p.url}</div>`;
+    box.appendChild(div);
+  });
+}
 </script>
 </body>
-</html>
+</html

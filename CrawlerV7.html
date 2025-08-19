@@ -139,11 +139,23 @@ renderDomainList();
 
 // --- Fetch thông minh ---
 async function fetchSmart(url, index, domainKey) {
-  if (domainKey === "dreameshirt.com" && index > 50) {
-    const res = await fetch(`https://api.scraperapi.com/?api_key=${scraperApiKey}&url=${encodeURIComponent(url)}`);
-    if (res.ok) return res;
-    throw new Error("ScraperAPI lỗi " + res.status);
+  if (domainKey === "dreameshirt.com") {
+    // Ưu tiên CF Proxy
+    try {
+      const res = await fetch(cfProxy + encodeURIComponent(url));
+      if (res.ok) return res;
+      console.warn(`[dreameshirt] CF proxy lỗi ${res.status}, fallback ScraperAPI`);
+    } catch (e) {
+      console.warn(`[dreameshirt] CF proxy exception: ${e.message}, fallback ScraperAPI`);
+    }
+
+    // Nếu CF lỗi thì mới dùng ScraperAPI
+    const res2 = await fetch(`https://api.scraperapi.com/?api_key=${scraperApiKey}&url=${encodeURIComponent(url)}`);
+    if (res2.ok) return res2;
+    throw new Error("ScraperAPI lỗi " + res2.status);
+
   } else {
+    // Các domain khác vẫn y nguyên
     const res = await fetch(cfProxy + encodeURIComponent(url));
     if (res.ok) return res;
     throw new Error("CF proxy lỗi " + res.status);

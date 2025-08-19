@@ -91,7 +91,7 @@ async function loadProducts(domain, page = 1) {
   currentDomain = domain;
   productsContainer.innerHTML = '';
   try {
-    const res = await fetch(`https://${domain}/wp-json/wp/v3/product?orderby=date&order=desc&per_page=${perPage}&page=${page}`);
+    const res = await fetch(`https://${domain}/wp-json/wp/v2/product?orderby=date&order=desc&per_page=${perPage}&page=${page}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const products = await res.json();
     if (!Array.isArray(products)) throw new Error('Invalid JSON');
@@ -168,6 +168,7 @@ nextBtn.addEventListener('click', () => {
 
 </body>
 </html>
+
 
 
 

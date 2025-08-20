@@ -102,7 +102,7 @@ renderDomainList();
 
 // --- Fetch thông minh ---
 async function fetchSmart(url, index, domainKey) {
-  if (domainKey === "dreameshirt.com") {
+  if (["dreameshirt.com","teeworksusa.com","uscraftedtees.com"].includes(domainKey)) {
     try {
       const res = await fetch(cfProxy + encodeURIComponent(url));
       if (res.ok) return res;

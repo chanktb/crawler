@@ -59,7 +59,7 @@
 </head>
 <body>
 <h1><a href="/crawler/">DANH SÁCH TOOL</a></h1>
-
+<!--CrawlerV7.4 Gemini-->
 <h1>🧭 CrawlerV7 - Thanh Thần Tún</h1>
 <button onclick="location.href='javascript:location.reload()'" style="background-color: blue; color: white; padding: 10px 20px;margin-bottom: 20px;">TẢI LẠI TRANG</button>
 <div class="single-domain">
@@ -121,15 +121,15 @@ const scraperApiKey = "a81f3cb242118447359ed92553e82749"; // dùng cho dreameshi
 
 // --- Domain gốc từ V6.3 ---
 const baseDomains = {
-  "teespix.com": { url: "https://teespix.com/", containerSel: ".row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: "div.product", titleSel: "a[aria-label]", titleAttr: "aria-label", imgSel: "img", imgAttr: "src" },
-  "techteesusa.com": { url: "https://techteesusa.com/", containerSel: "div.row.large-columns-5.medium-columns-3.small-columns-2.row-normal", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
+  "teespix.com": { url: "https://teespix.com/", containerSel: ".row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: "div.product", titleSel: "a[aria-label]", titleAttr: "aria-label", imgSel: "img", imgAttr: "src", urlSel: "a.plain", urlAttr: "href" },
+  "techteesusa.com": { url: "https://techteesusa.com/", containerSel: "div.row.large-columns-5.medium-columns-3.small-columns-2.row-normal", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src", urlSel: "a.plain", urlAttr: "href" },
   "teeworksusa.com": { url: "https://teeworksusa.com/" }, 
-  "geekteesus.com": { url: "https://geekteesus.com/", containerSel: ["div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall.row-full-width","div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall"], itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
+  "geekteesus.com": { url: "https://geekteesus.com/", containerSel: ["div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall.row-full-width","div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall"], itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src", urlSel: "a.plain", urlAttr: "href" },
   "dreameshirt.com": { url: "https://dreameshirt.com/" },
   "uscraftedtees.com": { url: "https://uscraftedtees.com/" },
   "meredpremium.com": { url: "https://meredpremium.com/" },
-  "eteeclothing.com": { url: "https://eteeclothing.com/", containerSel: ".row.large-columns-6.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
-  "nowbestshirt.com": { url: "https://nowbestshirt.com/", containerSel: ".row.large-columns-5.medium-columns-3.small-columns-2.row-small", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: ".box-image img:nth-child(2)", imgAttr: "src" },
+  "eteeclothing.com": { url: "https://eteeclothing.com/", containerSel: ".row.large-columns-6.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src", urlSel: "a.plain", urlAttr: "href" },
+  "nowbestshirt.com": { url: "https://nowbestshirt.com/", containerSel: ".row.large-columns-5.medium-columns-3.small-columns-2.row-small", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: ".box-image img:nth-child(2)", imgAttr: "src", urlSel: "a.plain", urlAttr: "href" },
   "berrylittles.com": { url: "https://berrylittles.com/" },
 };
 
@@ -236,7 +236,13 @@ async function showProducts(domainKey) {
       if(cfg.titleAttr){const tEl=it.querySelector(cfg.titleSel); if(tEl) title=tEl.getAttribute(cfg.titleAttr)||"";}
       else {const tEl=it.querySelector(cfg.titleSel); if(tEl) title=tEl.textContent.trim();}
       let img=""; const imgEl=it.querySelector(cfg.imgSel); if(imgEl) img=imgEl.getAttribute(cfg.imgAttr)||"";
-      results.push({title,img});
+      let url=""; 
+      if(it.closest('a')) {
+        url = abs(it.closest('a').href, cfg.url);
+      } else if (it.querySelector('a')) {
+        url = abs(it.querySelector('a').href, cfg.url);
+      }
+      results.push({title,img,url});
     });
     render(results);
     document.getElementById("status").innerText=`Tìm thấy ${results.length} sản phẩm`;
@@ -263,7 +269,7 @@ async function showAllshirt(domain) {
       if(domain === "teehandus.com" && img.includes("-t-shirt.jpg")) {
         img = img.replace("-t-shirt.jpg", "-sweater.jpg");
       }
-      results.push({title:p.title.rendered,img});
+      results.push({title:p.title.rendered,img,url:p.link});
     });
     render(results);
     document.getElementById("status").innerText=`${domain}: ${results.length} sản phẩm`;

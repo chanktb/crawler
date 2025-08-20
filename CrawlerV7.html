@@ -9,7 +9,36 @@
   .domains { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; max-width: 746px; margin: 0 auto 20px auto; align-items: start; }
   .col { display:flex; flex-direction:column; gap:10px; }
   #col2 { overflow-y: auto; }
-  .domain { background:#fff; padding:10px 15px; border-radius:8px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; }
+  .domain { background:#fff; padding:5px 15px; border-radius:8px; border:1px solid #ddd; display:flex; justify-content:space-between; align-items:center; }
+  .single-domain {
+    background:#fff;
+    padding:5px 15px;
+    border-radius:8px;
+    border:1px solid #ddd;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    width: 700px;
+    margin: 0 auto 5px;
+  }
+  .teeworks-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+  .teeworks-domain-text {
+    text-align: left;
+    width: 170px;
+  }
+  .single-domain input {
+    width: 350px;
+    padding: 6px;
+  }
+  a, a:visited {
+    text-decoration: none;
+    color: blue;
+	}
   button { padding:6px 12px; cursor:pointer; border:none; border-radius:5px; background:#2563eb; color:white; }
   button:hover { background:#1d4ed8; }
   #status { margin:15px 0; color:#555; font-style:italic; }
@@ -19,7 +48,6 @@
   .title { font-weight:bold; font-size:16px; margin-bottom:4px; }
   .url { font-size:13px; color:#2563eb; word-break:break-all; }
 </style>
-<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-487BB6S2C2"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -31,10 +59,48 @@
 </head>
 <body>
 <h1><a href="/crawler/">DANH SÁCH TOOL</a></h1>
-<h1><a href="javascript:location.reload()">TẢI LẠI TRANG</a></h1>
-<h1>🧭 CrawlerV7 - Thanh Thần Tún</h1>
 
-<!-- Nhập domain để test -->
+<h1>🧭 CrawlerV7 - Thanh Thần Tún</h1>
+<button onclick="location.href='javascript:location.reload()'" style="background-color: blue; color: white; padding: 10px 20px;margin-bottom: 20px;">TẢI LẠI TRANG</button>
+<div class="single-domain">
+    <div class="teeworks-container">
+        <b class="teeworks-domain-text">teeworksusa.com</b>
+        <input type="text" id="teeworksusaUrlInput" placeholder="Nhập URL sản phẩm (vd: teeworksusa.com/product/abc)">
+        <button onclick="showProducts('teeworksusa.com')">Show sản phẩm</button>
+    </div>
+</div>
+<div class="single-domain">
+    <div class="teeworks-container">
+        <b class="teeworks-domain-text">dreameshirt.com</b>
+        <input type="text" id="dreameshirtUrlInput" placeholder="Nhập URL sản phẩm (vd: dreameshirt.com/product/abc)">
+        <button onclick="showProducts('dreameshirt.com')">Show sản phẩm</button>
+    </div>
+</div>
+<!--
+<div class="single-domain">
+    <div class="teeworks-container">
+        <b class="teeworks-domain-text">uscraftedtees.com</b>
+        <input type="text" id="uscraftedteesUrlInput" placeholder="Nhập URL sản phẩm (vd: uscraftedtees.com/product/abc)">
+        <button onclick="showProducts('uscraftedtees.com')">Show sản phẩm</button>
+    </div>
+</div>
+-->
+<div class="single-domain">
+    <div class="teeworks-container">
+        <b class="teeworks-domain-text">meredpremium.com</b>
+        <input type="text" id="meredpremiumUrlInput" placeholder="Nhập URL sản phẩm (vd: meredpremium.com/product/abc)">
+        <button onclick="showProducts('meredpremium.com')">Show sản phẩm</button>
+    </div>
+</div>
+<div class="single-domain">
+    <div class="teeworks-container">
+        <b class="teeworks-domain-text">berrylittles.com</b>
+        <input type="text" id="berrylittlesUrlInput" placeholder="Nhập URL sản phẩm (vd: berrylittles.com/product/abc)">
+        <button onclick="showProducts('berrylittles.com')">Show sản phẩm</button>
+    </div>
+</div>
+<h3>Nhập các domain mà bạn muốn quét xem có được không?</h3>
+<p>Nếu báo lỗi không quét được thì gửi domain cho admin tìm cách!</p>
 <div style="margin-bottom:20px;">
   <input type="text" id="domainInput" placeholder="Nhập domain để test (vd: abc.com)" style="padding:6px;width:250px;">
   <button onclick="testDomain()">Load</button>
@@ -63,11 +129,12 @@ const baseDomains = {
   "uscraftedtees.com": { url: "https://uscraftedtees.com/" },
   "meredpremium.com": { url: "https://meredpremium.com/" },
   "eteeclothing.com": { url: "https://eteeclothing.com/", containerSel: ".row.large-columns-6.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
-  "nowbestshirt.com": { url: "https://nowbestshirt.com/", containerSel: ".row.large-columns-5.medium-columns-3.small-columns-2.row-small", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: ".box-image img:nth-child(2)", imgAttr: "src" }
+  "nowbestshirt.com": { url: "https://nowbestshirt.com/", containerSel: ".row.large-columns-5.medium-columns-3.small-columns-2.row-small", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: ".box-image img:nth-child(2)", imgAttr: "src" },
+  "berrylittles.com": { url: "https://berrylittles.com/" },
 };
 
 // --- Domain mới từ AllshirtV2 ---
-const allshirtDomains = ["teehandus.com","teleteeshirt.com","teesprime.com","clickoneshirt.com","melonashirt.com","mercuryshirt.com","wildfoxtee.com","capitoneshirt.com","lovingsquad.com","trenvoteeco.com","arjomany.com","designatshop.com","collectionpostertour.com","trendingnowe.com","neoteeco.com","hornnastee.com","dukamala.com", "trendteeshirts.com", "picturestees.com", "teeshirtbear.com"];
+const allshirtDomains = ["teehandus.com","teleteeshirt.com","uscraftedtees.com","teesprime.com","clickoneshirt.com","melonashirt.com","mercuryshirt.com","wildfoxtee.com","capitoneshirt.com","lovingsquad.com","trenvoteeco.com","arjomany.com","designatshop.com","collectionpostertour.com","trendingnowe.com","neoteeco.com","hornnastee.com","dukamala.com", "trendteeshirts.com", "picturestees.com", "teeshirtbear.com", "limotees.com"];
 
 // --- Render danh sách domain ---
 function renderDomainList() {
@@ -76,17 +143,19 @@ function renderDomainList() {
   col1.innerHTML = "";
   col2.innerHTML = "";
 
-  Object.keys(baseDomains).forEach(k=>{
+  const domainsToFilter = ["teeworksusa.com", "dreameshirt.com", "uscraftedtees.com", "meredpremium.com", "berrylittles.com"];
+  
+  Object.keys(baseDomains).filter(k => !domainsToFilter.includes(k)).forEach(k => {
     const div = document.createElement("div");
-    div.className="domain";
-    div.innerHTML=`<b>${k}</b> <button onclick="showProducts('${k}')">Show sản phẩm</button>`;
+    div.className = "domain";
+    div.innerHTML = `<b>${k}</b> <button onclick="showProducts('${k}')">Show sản phẩm</button>`;
     col1.appendChild(div);
   });
 
-  allshirtDomains.forEach(d=>{
+  allshirtDomains.forEach(d => {
     const div = document.createElement("div");
-    div.className="domain";
-    div.innerHTML=`<b>${d}</b> <button onclick="showAllshirt('${d}')">Show sản phẩm</button>`;
+    div.className = "domain";
+    div.innerHTML = `<b>${d}</b> <button onclick="showAllshirt('${d}')">Show sản phẩm</button>`;
     col2.appendChild(div);
   });
 
@@ -103,7 +172,7 @@ renderDomainList();
 
 // --- Fetch thông minh ---
 async function fetchSmart(url, index, domainKey) {
-  if (["dreameshirt.com","teeworksusa.com","uscraftedtees.com", "meredpremium.com"].includes(domainKey)) {
+  if (["dreameshirt.com","teeworksusa.com","uscraftedtees.com", "meredpremium.com", "berrylittles.com"].includes(domainKey)) {
     try {
       const res = await fetch(cfProxy + encodeURIComponent(url));
       if (res.ok) return res;
@@ -121,12 +190,24 @@ async function fetchSmart(url, index, domainKey) {
 // --- Logic chính cho domain cũ ---
 async function showProducts(domainKey) {
   const cfg = baseDomains[domainKey];
-  document.getElementById("status").innerText = `Đang quét ${cfg.url}...`;
+  document.getElementById("status").innerText = `Đang quét ${domainKey}...`;
   document.getElementById("results").innerHTML = "";
 
-  if (["dreameshirt.com","uscraftedtees.com","teeworksusa.com", "meredpremium.com"].includes(domainKey)) {
+  if (["dreameshirt.com","uscraftedtees.com","teeworksusa.com", "meredpremium.com", "berrylittles.com"].includes(domainKey)) {
     try {
-      const list = await crawlSequential(domainKey, cfg.url, 100);
+      let initialUrl = null;
+      if (domainKey === "teeworksusa.com") {
+        initialUrl = document.getElementById("teeworksusaUrlInput").value.trim();
+      } else if (domainKey === "dreameshirt.com") {
+        initialUrl = document.getElementById("dreameshirtUrlInput").value.trim();
+      } else if (domainKey === "uscraftedtees.com") {
+        initialUrl = document.getElementById("uscraftedteesUrlInput").value.trim();
+      } else if (domainKey === "meredpremium.com") {
+        initialUrl = document.getElementById("meredpremiumUrlInput").value.trim();
+      } else if (domainKey === "berrylittles.com") {
+        initialUrl = document.getElementById("berrylittlesUrlInput").value.trim();
+      }
+      const list = await crawlSequential(domainKey, cfg.url, 100, initialUrl);
       render(list);
       document.getElementById("status").innerText = `Tìm thấy ${list.length} sản phẩm`;
     } catch(e) {
@@ -198,18 +279,22 @@ function testDomain() {
 }
 
 // --- Helpers ---
-async function crawlSequential(domainKey, homeUrl, targetCount=100){
+async function crawlSequential(domainKey, homeUrl, targetCount=100, initialUrl=null){
   const results=[]; const seen=new Set();
-  let firstUrl;
-  if(domainKey==="teeworksusa.com"){
-    const homeDoc=await fetchDocSmart(homeUrl,1,domainKey);
-    const c=homeDoc.querySelector('.elementor-element.elementor-element-26e4f04');
-    if(c){const a=c.querySelector('a[href*="/product/"]'); if(a) firstUrl=abs(a.getAttribute("href"),homeUrl);}
-  } else {
-    const homeDoc=await fetchDocSmart(homeUrl,1,domainKey);
-    firstUrl=findFirstProductFromHome(homeDoc,homeUrl);
+  let firstUrl = initialUrl;
+  if (!firstUrl) {
+    if(domainKey==="teeworksusa.com"){
+      const homeDoc=await fetchDocSmart(homeUrl,1,domainKey);
+      const c=homeDoc.querySelector('.elementor-element.elementor-element-26e4f04');
+      if(c){const a=c.querySelector('a[href*="/product/"]'); if(a) firstUrl=abs(a.getAttribute("href"),homeUrl);}
+    } else {
+      const homeDoc=await fetchDocSmart(homeUrl,1,domainKey);
+      firstUrl=findFirstProductFromHome(homeDoc,homeUrl);
+    }
   }
+  
   if(!firstUrl) throw new Error("Không tìm thấy SP đầu tiên");
+  
   let {meta,doc,url:curUrl}=await fetchProductMetaAndDocSmart(firstUrl,1,domainKey);
   if(meta){results.push(meta);seen.add(curUrl);render(results);}
   for(let i=2;i<=targetCount;i++){
@@ -217,6 +302,9 @@ async function crawlSequential(domainKey, homeUrl, targetCount=100){
     if(domainKey==="teeworksusa.com"){
       const prevDiv=doc.querySelector("div.product-prev a[href*='/product/']");
       if(!prevDiv) break; nextUrl=abs(prevDiv.getAttribute("href"),curUrl);
+    } else if (domainKey === "berrylittles.com"){
+        const nextA = doc.querySelector('a[href*="/product/"] i.icon-angle-right')?.closest('a');
+        if(!nextA) break; nextUrl = abs(nextA.getAttribute("href"), curUrl);
     } else {
       nextUrl=findNextProductUrlFromDetail(doc,curUrl,(i===2)?1:2);
     }
@@ -272,4 +360,4 @@ function render(list){
 }
 </script>
 </body>
-</html
+</html>

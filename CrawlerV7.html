@@ -61,6 +61,7 @@ const baseDomains = {
   "geekteesus.com": { url: "https://geekteesus.com/", containerSel: ["div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall.row-full-width","div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall"], itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
   "dreameshirt.com": { url: "https://dreameshirt.com/" },
   "uscraftedtees.com": { url: "https://uscraftedtees.com/" },
+  "meredpremium.com": { url: "https://meredpremium.com/" },
   "eteeclothing.com": { url: "https://eteeclothing.com/", containerSel: ".row.large-columns-6.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src" },
   "nowbestshirt.com": { url: "https://nowbestshirt.com/", containerSel: ".row.large-columns-5.medium-columns-3.small-columns-2.row-small", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: ".box-image img:nth-child(2)", imgAttr: "src" }
 };
@@ -102,7 +103,7 @@ renderDomainList();
 
 // --- Fetch thông minh ---
 async function fetchSmart(url, index, domainKey) {
-  if (["dreameshirt.com","teeworksusa.com","uscraftedtees.com"].includes(domainKey)) {
+  if (["dreameshirt.com","teeworksusa.com","uscraftedtees.com", "meredpremium.com"].includes(domainKey)) {
     try {
       const res = await fetch(cfProxy + encodeURIComponent(url));
       if (res.ok) return res;
@@ -123,7 +124,7 @@ async function showProducts(domainKey) {
   document.getElementById("status").innerText = `Đang quét ${cfg.url}...`;
   document.getElementById("results").innerHTML = "";
 
-  if (["dreameshirt.com","uscraftedtees.com","teeworksusa.com"].includes(domainKey)) {
+  if (["dreameshirt.com","uscraftedtees.com","teeworksusa.com", "meredpremium.com"].includes(domainKey)) {
     try {
       const list = await crawlSequential(domainKey, cfg.url, 100);
       render(list);

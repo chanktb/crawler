@@ -59,7 +59,6 @@
 </head>
 <body>
 <h1><a href="/crawler/">DANH SÁCH TOOL</a></h1>
-<!--CrawlerV7.4 Gemini-->
 <h1>🧭 CrawlerV7 - Thanh Thần Tún</h1>
 <button onclick="location.href='javascript:location.reload()'" style="background-color: blue; color: white; padding: 10px 20px;margin-bottom: 20px;">TẢI LẠI TRANG</button>
 <div class="single-domain">
@@ -76,15 +75,6 @@
         <button onclick="showProducts('dreameshirt.com')">Show sản phẩm</button>
     </div>
 </div>
-<!--
-<div class="single-domain">
-    <div class="teeworks-container">
-        <b class="teeworks-domain-text">uscraftedtees.com</b>
-        <input type="text" id="uscraftedteesUrlInput" placeholder="Nhập URL sản phẩm (vd: uscraftedtees.com/product/abc)">
-        <button onclick="showProducts('uscraftedtees.com')">Show sản phẩm</button>
-    </div>
-</div>
--->
 <div class="single-domain">
     <div class="teeworks-container">
         <b class="teeworks-domain-text">meredpremium.com</b>
@@ -123,6 +113,7 @@ const scraperApiKey = "a81f3cb242118447359ed92553e82749"; // dùng cho dreameshi
 const baseDomains = {
   "teespix.com": { url: "https://teespix.com/", containerSel: ".row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: "div.product", titleSel: "a[aria-label]", titleAttr: "aria-label", imgSel: "img", imgAttr: "src", urlSel: "a.plain", urlAttr: "href" },
   "techteesusa.com": { url: "https://techteesusa.com/", containerSel: "div.row.large-columns-5.medium-columns-3.small-columns-2.row-normal", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src", urlSel: "a.plain", urlAttr: "href" },
+  "fanaticity.com": { url: "https://fanaticity.com/t-shirts/", containerSel: "div.row.large-columns-4.medium-columns-3.small-columns-2.row-small.row-full-width", itemSel: "div.product-small.box", titleSel: "a[aria-label]", titleAttr: "aria-label", imgSel: "img.attachment-woocommerce_thumbnail", imgAttr: "src", urlSel: "a[aria-label]", urlAttr: "href" },
   "teeworksusa.com": { url: "https://teeworksusa.com/" }, 
   "geekteesus.com": { url: "https://geekteesus.com/", containerSel: ["div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall.row-full-width","div.row.large-columns-4.medium-columns-3.small-columns-2.row-xsmall"], itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src", urlSel: "a.plain", urlAttr: "href" },
   "dreameshirt.com": { url: "https://dreameshirt.com/" },
@@ -134,7 +125,7 @@ const baseDomains = {
 };
 
 // --- Domain mới từ AllshirtV2 ---
-const allshirtDomains = ["teehandus.com","teleteeshirt.com","uscraftedtees.com","teesprime.com","clickoneshirt.com","melonashirt.com","mercuryshirt.com","wildfoxtee.com","capitoneshirt.com","lovingsquad.com","trenvoteeco.com","arjomany.com","designatshop.com","collectionpostertour.com","trendingnowe.com","neoteeco.com","hornnastee.com","dukamala.com", "trendteeshirts.com", "picturestees.com", "teeshirtbear.com", "limotees.com"];
+const allshirtDomains = ["teehandus.com","teleteeshirt.com","uscraftedtees.com","teesprime.com","clickoneshirt.com","melonashirt.com","mercuryshirt.com","wildfoxtee.com","capitoneshirt.com","lovingsquad.com","trenvoteeco.com","arjomany.com","designatshop.com","collectionpostertour.com","trendingnowe.com","neoteeco.com","hornnastee.com","dukamala.com", "trendteeshirts.com", "picturestees.com", "teeshirtbear.com", "limotees.com", "digitalhandmades.com"];
 
 // --- Render danh sách domain ---
 function renderDomainList() {
@@ -143,7 +134,7 @@ function renderDomainList() {
   col1.innerHTML = "";
   col2.innerHTML = "";
 
-  const domainsToFilter = ["teeworksusa.com", "dreameshirt.com", "uscraftedtees.com", "meredpremium.com", "berrylittles.com"];
+  const domainsToFilter = ["teeworksusa.com", "dreameshirt.com", "uscraftedtees.com", "meredpremium.com", "berrylittles.com", "digitalhandmades.com"];
   
   Object.keys(baseDomains).filter(k => !domainsToFilter.includes(k)).forEach(k => {
     const div = document.createElement("div");
@@ -237,7 +228,10 @@ async function showProducts(domainKey) {
       else {const tEl=it.querySelector(cfg.titleSel); if(tEl) title=tEl.textContent.trim();}
       let img=""; const imgEl=it.querySelector(cfg.imgSel); if(imgEl) img=imgEl.getAttribute(cfg.imgAttr)||"";
       let url=""; 
-      if(it.closest('a')) {
+      if (cfg.urlSel) {
+        const urlEl = it.querySelector(cfg.urlSel);
+        if (urlEl) url = abs(urlEl.getAttribute(cfg.urlAttr), cfg.url);
+      } else if(it.closest('a')) {
         url = abs(it.closest('a').href, cfg.url);
       } else if (it.querySelector('a')) {
         url = abs(it.querySelector('a').href, cfg.url);
@@ -249,28 +243,49 @@ async function showProducts(domainKey) {
   } catch(e){document.getElementById("status").innerText="Lỗi: "+e.message;}
 }
 
-// --- Logic cho domain AllshirtV2 ---
+// --- Logic cho domain AllshirtV2 và DigitalHandmades ---
 async function showAllshirt(domain) {
   document.getElementById("status").innerText=`Đang tải từ ${domain}...`;
   document.getElementById("results").innerHTML="";
+  
+  let apiUrl;
+  if (domain === "digitalhandmades.com") {
+      apiUrl = `https://${domain}/wp-json/wp/v2/product?per_page=100&orderby=date&order=desc`;
+  } else {
+      apiUrl = `https://${domain}/wp-json/wp/v2/product?orderby=date&order=desc&per_page=100`;
+  }
+
   try {
-    const res=await fetch(`https://${domain}/wp-json/wp/v2/product?orderby=date&order=desc&per_page=100`);
+    const res=await fetch(cfProxy+encodeURIComponent(apiUrl));
     if(!res.ok) throw new Error("HTTP "+res.status);
     const products=await res.json();
     const results=[];
-    products.forEach(p=>{
+    for (const p of products) {
       let img="https://via.placeholder.com/200";
-      if(p.content&&p.content.rendered){
+      if(p.content && p.content.rendered){
         const tmp=document.createElement("div");
         tmp.innerHTML=p.content.rendered;
         const imgTag=tmp.querySelector("img");
-        if(imgTag&&imgTag.src) img=imgTag.src;
+        if(imgTag && imgTag.src) img=imgTag.src;
       }
       if(domain === "teehandus.com" && img.includes("-t-shirt.jpg")) {
         img = img.replace("-t-shirt.jpg", "-sweater.jpg");
       }
+
+      // Xử lý hình ảnh cho digitalhandmades.com
+      if (domain === "digitalhandmades.com" && p._links && p._links['wp:featuredmedia']) {
+          const mediaUrl = p._links['wp:featuredmedia'][0].href;
+          const mediaRes = await fetch(cfProxy + encodeURIComponent(mediaUrl));
+          if (mediaRes.ok) {
+              const media = await mediaRes.json();
+              if (media.source_url) {
+                  img = media.source_url;
+              }
+          }
+      }
+      
       results.push({title:p.title.rendered,img,url:p.link});
-    });
+    }
     render(results);
     document.getElementById("status").innerText=`${domain}: ${results.length} sản phẩm`;
   } catch(e){

@@ -15,6 +15,7 @@
   .product { background:#fff; border:1px solid #ddd; padding:12px; border-radius:10px; width:720px; text-align:center; }
   .product img { max-width:700px; height:auto; border-radius:8px; margin-bottom:8px; }
   .title { font-weight:bold; font-size:16px; }
+  .info { font-size: 14px; color: #777; margin-top: 5px; }
 </style>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-YZMWVQYQ6J"></script>
 <script>
@@ -46,6 +47,10 @@
     <b>fanaticity.com</b>
     <button onclick="showProducts('fanaticity')">Show sản phẩm</button>
   </div>
+  <div class="domain">
+    <b>digitalhandmades.com</b>
+    <button onclick="showProductsFromAPI('digitalhandmades')">Show sản phẩm</button>
+  </div>
 </div>
 
 <div id="status">Chưa quét.</div>
@@ -55,7 +60,7 @@
 // 👉 sửa lại thành domain Worker của bạn
 const proxy = "https://cors-proxy.trantpu.workers.dev/?url=";
 
-// --- Config ---
+// --- Config for HTML crawling ---
 const domains = {
   teespix: {
     url: "https://teespix.com/",
@@ -97,14 +102,20 @@ const domains = {
     url: "https://fanaticity.com/t-shirts/",
     containerSel: "div.row.large-columns-4.medium-columns-3.small-columns-2.row-small.row-full-width",
     itemSel: "div.product-small.box",
-    titleSel: "a[aria-label]",
-    titleAttr: "aria-label",
+    titleSel: "p.name.product-title a",
     imgSel: "img.attachment-woocommerce_thumbnail",
     imgAttr: "src"
   }
 };
 
-// --- Tool ---
+// --- Config for API crawling ---
+const apiDomains = {
+    digitalhandmades: {
+        url: "https://digitalhandmades.com/wp-json/wp/v2/product?per_page=100&orderby=date&order=desc",
+    },
+};
+
+// --- Tool for HTML crawling ---
 async function showProducts(domainKey) {
   const cfg = domains[domainKey];
   document.getElementById("status").innerText = `Đang quét ${cfg.url}...`;
@@ -159,6 +170,52 @@ async function showProducts(domainKey) {
   }
 }
 
+// --- Tool for API crawling ---
+async function showProductsFromAPI(domainKey) {
+    const cfg = apiDomains[domainKey];
+    document.getElementById("status").innerText = `Đang quét API của ${domainKey}...`;
+    document.getElementById("results").innerHTML = "";
+
+    try {
+        const res = await fetch(proxy + encodeURIComponent(cfg.url));
+        if (!res.ok) throw new Error("Không thể tải dữ liệu từ API.");
+        const products = await res.json();
+        
+        if (!products || products.length === 0) {
+            document.getElementById("status").innerText = "Không tìm thấy sản phẩm nào từ API.";
+            return;
+        }
+
+        const results = [];
+        for (const product of products) {
+            const title = product.title.rendered;
+            const product_url = product.link;
+            const publish_date = new Date(product.date_gmt).toLocaleDateString();
+
+            let img = '';
+            if (product._links && product._links['wp:featuredmedia']) {
+                const mediaUrl = product._links['wp:featuredmedia'][0].href;
+                const mediaRes = await fetch(proxy + encodeURIComponent(mediaUrl));
+                if (mediaRes.ok) {
+                    const media = await mediaRes.json();
+                    if (media.source_url) {
+                        img = media.source_url;
+                    }
+                }
+            }
+
+            results.push({title, img, product_url, publish_date});
+        }
+        
+        renderWithExtraInfo(results);
+        document.getElementById("status").innerText = `Tìm thấy ${results.length} sản phẩm từ API.`;
+
+    } catch (e) {
+        console.error(e);
+        document.getElementById("status").innerText = "Lỗi: " + e.message;
+    }
+}
+
 function render(list) {
   const box = document.getElementById("results");
   box.innerHTML = "";
@@ -169,6 +226,23 @@ function render(list) {
       <div><b>#${i+1}</b></div>
       ${p.img ? `<img src="${p.img}" />` : "(no image)"}
       <div class="title">${p.title||"(no title)"}</div>
+    `;
+    box.appendChild(div);
+  });
+}
+
+function renderWithExtraInfo(list) {
+  const box = document.getElementById("results");
+  box.innerHTML = "";
+  list.forEach((p,i)=>{
+    const div = document.createElement("div");
+    div.className = "product";
+    div.innerHTML = `
+      <div><b>#${i+1}</b></div>
+      ${p.img ? `<img src="${p.img}" />` : "(no image)"}
+      <div class="title">${p.title||"(no title)"}</div>
+      <div class="info">URL: ${p.product_url}</div>
+      <div class="info">Ngày đăng: ${p.publish_date}</div>
     `;
     box.appendChild(div);
   });

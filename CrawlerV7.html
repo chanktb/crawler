@@ -134,7 +134,7 @@ function renderDomainList() {
   col1.innerHTML = "";
   col2.innerHTML = "";
 
-  const domainsToFilter = ["teeworksusa.com", "dreameshirt.com", "uscraftedtees.com", "meredpremium.com", "berrylittles.com", "digitalhandmades.com"];
+  const domainsToFilter = ["teeworksusa.com", "dreameshirt.com", "uscraftedtees.com", "meredpremium.com", "berrylittles.com"];
   
   Object.keys(baseDomains).filter(k => !domainsToFilter.includes(k)).forEach(k => {
     const div = document.createElement("div");
@@ -248,44 +248,47 @@ async function showAllshirt(domain) {
   document.getElementById("status").innerText=`Đang tải từ ${domain}...`;
   document.getElementById("results").innerHTML="";
   
-  let apiUrl;
+  let apiUrl = `https://${domain}/wp-json/wp/v2/product?per_page=100&orderby=date&order=desc`;
   if (domain === "digitalhandmades.com") {
       apiUrl = `https://${domain}/wp-json/wp/v2/product?per_page=100&orderby=date&order=desc`;
-  } else {
-      apiUrl = `https://${domain}/wp-json/wp/v2/product?orderby=date&order=desc&per_page=100`;
   }
 
   try {
     const res=await fetch(cfProxy+encodeURIComponent(apiUrl));
     if(!res.ok) throw new Error("HTTP "+res.status);
     const products=await res.json();
-    const results=[];
-    for (const p of products) {
-      let img="https://via.placeholder.com/200";
-      if(p.content && p.content.rendered){
-        const tmp=document.createElement("div");
-        tmp.innerHTML=p.content.rendered;
-        const imgTag=tmp.querySelector("img");
-        if(imgTag && imgTag.src) img=imgTag.src;
-      }
-      if(domain === "teehandus.com" && img.includes("-t-shirt.jpg")) {
-        img = img.replace("-t-shirt.jpg", "-sweater.jpg");
-      }
+    
+    // Tạo mảng các promise để lấy hình ảnh song song
+    const mediaPromises = products.map(p => {
+        if (domain === "digitalhandmades.com" && p._links && p._links['wp:featuredmedia']) {
+            const mediaUrl = p._links['wp:featuredmedia'][0].href;
+            return fetch(cfProxy + encodeURIComponent(mediaUrl))
+                .then(res => res.ok ? res.json() : null)
+                .then(media => media && media.source_url ? media.source_url : "https://via.placeholder.com/200")
+                .catch(() => "https://via.placeholder.com/200");
+        } else {
+            let img = "https://via.placeholder.com/200";
+            if (p.content && p.content.rendered) {
+                const tmp = document.createElement("div");
+                tmp.innerHTML = p.content.rendered;
+                const imgTag = tmp.querySelector("img");
+                if (imgTag && imgTag.src) img = imgTag.src;
+            }
+            if(domain === "teehandus.com" && img.includes("-t-shirt.jpg")) {
+              img = img.replace("-t-shirt.jpg", "-sweater.jpg");
+            }
+            return Promise.resolve(img);
+        }
+    });
 
-      // Xử lý hình ảnh cho digitalhandmades.com
-      if (domain === "digitalhandmades.com" && p._links && p._links['wp:featuredmedia']) {
-          const mediaUrl = p._links['wp:featuredmedia'][0].href;
-          const mediaRes = await fetch(cfProxy + encodeURIComponent(mediaUrl));
-          if (mediaRes.ok) {
-              const media = await mediaRes.json();
-              if (media.source_url) {
-                  img = media.source_url;
-              }
-          }
-      }
-      
-      results.push({title:p.title.rendered,img,url:p.link});
-    }
+    const imageUrls = await Promise.all(mediaPromises);
+    
+    const results = products.map((p, index) => ({
+      title: p.title.rendered,
+      img: imageUrls[index],
+      url: p.link
+    }));
+    
     render(results);
     document.getElementById("status").innerText=`${domain}: ${results.length} sản phẩm`;
   } catch(e){

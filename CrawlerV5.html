@@ -242,7 +242,7 @@ function renderWithExtraInfo(list) {
       ${p.img ? `<img src="${p.img}" />` : "(no image)"}
       <div class="title">${p.title||"(no title)"}</div>
       <div class="info">URL: ${p.product_url}</div>
-      <div class="info">Ngày đăng: ${p.publish_date}</div>
+      <div class="info">Published: ${p.publish_date}</div>
     `;
     box.appendChild(div);
   });
@@ -250,3 +250,4 @@ function renderWithExtraInfo(list) {
 </script>
 </body>
 </html>
+

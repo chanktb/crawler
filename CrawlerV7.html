@@ -248,26 +248,52 @@ async function showAllshirt(domain) {
   document.getElementById("status").innerText=`Đang tải từ ${domain}...`;
   document.getElementById("results").innerHTML="";
   
-  let apiUrl = `https://${domain}/wp-json/wp/v2/product?per_page=100&orderby=date&order=desc`;
-  if (domain === "digitalhandmades.com") {
-      apiUrl = `https://${domain}/wp-json/wp/v2/product?per_page=100&orderby=date&order=desc`;
-  }
+  const apiUrl = `https://${domain}/wp-json/wp/v2/product?per_page=100&orderby=date&order=desc`;
 
   try {
-    const res=await fetch(cfProxy+encodeURIComponent(apiUrl));
-    if(!res.ok) throw new Error("HTTP "+res.status);
-    const products=await res.json();
+    const res = await fetch(cfProxy + encodeURIComponent(apiUrl));
+    if(!res.ok) throw new Error("HTTP " + res.status);
+    const products = await res.json();
     
-    // Tạo mảng các promise để lấy hình ảnh song song
-    const mediaPromises = products.map(p => {
+    // Tạo mảng các promise để lấy hình ảnh và tiêu đề (cho picturestees) song song
+    const promises = products.map(p => {
+        let title = p.title.rendered;
+        let img = "https://via.placeholder.com/200";
+
+        if (domain === "picturestees.com") {
+            // Trường hợp đặc biệt cho picturestees: lấy tiêu đề từ thuộc tính alt
+            return fetch(cfProxy + encodeURIComponent(p.link))
+                .then(res => res.ok ? res.text() : null)
+                .then(html => {
+                    if (html) {
+                        const doc = new DOMParser().parseFromString(html, "text/html");
+                        const imgTag = doc.querySelector('meta[property="og:image"]');
+                        if (imgTag && imgTag.content) {
+                            img = imgTag.content;
+                            const titleMatch = imgTag.content.match(/([^\/]+)-(t-shirt|hoodie|sweater)\.jpg/i);
+                            if(titleMatch && titleMatch[1]) {
+                                title = titleMatch[1].replace(/-/g, ' ');
+                            } else {
+                                title = doc.querySelector('meta[property="og:title"]')?.content || "";
+                            }
+                        }
+                    }
+                    return { title, img, url: p.link };
+                })
+                .catch(() => ({ title, img, url: p.link }));
+        }
+        
+        // Logic mặc định cho các domain khác
         if (domain === "digitalhandmades.com" && p._links && p._links['wp:featuredmedia']) {
             const mediaUrl = p._links['wp:featuredmedia'][0].href;
             return fetch(cfProxy + encodeURIComponent(mediaUrl))
                 .then(res => res.ok ? res.json() : null)
-                .then(media => media && media.source_url ? media.source_url : "https://via.placeholder.com/200")
-                .catch(() => "https://via.placeholder.com/200");
+                .then(media => {
+                    img = media && media.source_url ? media.source_url : img;
+                    return { title, img, url: p.link };
+                })
+                .catch(() => ({ title, img, url: p.link }));
         } else {
-            let img = "https://via.placeholder.com/200";
             if (p.content && p.content.rendered) {
                 const tmp = document.createElement("div");
                 tmp.innerHTML = p.content.rendered;
@@ -277,17 +303,11 @@ async function showAllshirt(domain) {
             if(domain === "teehandus.com" && img.includes("-t-shirt.jpg")) {
               img = img.replace("-t-shirt.jpg", "-sweater.jpg");
             }
-            return Promise.resolve(img);
+            return Promise.resolve({ title, img, url: p.link });
         }
     });
 
-    const imageUrls = await Promise.all(mediaPromises);
-    
-    const results = products.map((p, index) => ({
-      title: p.title.rendered,
-      img: imageUrls[index],
-      url: p.link
-    }));
+    const results = await Promise.all(promises);
     
     render(results);
     document.getElementById("status").innerText=`${domain}: ${results.length} sản phẩm`;

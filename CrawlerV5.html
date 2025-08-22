@@ -16,7 +16,6 @@
   .product img { max-width:700px; height:auto; border-radius:8px; margin-bottom:8px; }
   .title { font-weight:bold; font-size:16px; }
 </style>
-<!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-YZMWVQYQ6J"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -42,6 +41,10 @@
   <div class="domain">
     <b>geekteesus.com</b>
     <button onclick="showProducts('geekteesus')">Show sản phẩm</button>
+  </div>
+  <div class="domain">
+    <b>fanaticity.com</b>
+    <button onclick="showProducts('fanaticity')">Show sản phẩm</button>
   </div>
 </div>
 
@@ -88,6 +91,15 @@ const domains = {
     itemSel: ".product-small.box",
     titleSel: "p.name.product-title a",
     imgSel: "img",
+    imgAttr: "src"
+  },
+  fanaticity: {
+    url: "https://fanaticity.com/t-shirts/",
+    containerSel: "div.row.large-columns-4.medium-columns-3.small-columns-2.row-small.row-full-width",
+    itemSel: "div.product-small.box",
+    titleSel: "a[aria-label]",
+    titleAttr: "aria-label",
+    imgSel: "img.attachment-woocommerce_thumbnail",
     imgAttr: "src"
   }
 };
@@ -164,9 +176,3 @@ function render(list) {
 </script>
 </body>
 </html>
-
-
-
-
-
-

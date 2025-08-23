@@ -61,6 +61,7 @@
 <h1><a href="/crawler/">DANH SÁCH TOOL</a></h1>
 <h1>🧭 CrawlerV7 - Thanh Thần Tún</h1>
 <button onclick="location.href='javascript:location.reload()'" style="background-color: blue; color: white; padding: 10px 20px;margin-bottom: 20px;">TẢI LẠI TRANG</button>
+<h2>Làm vừa thôi để thời gian nghỉ ngơi!</h2>
 <div class="single-domain">
     <div class="teeworks-container">
         <b class="teeworks-domain-text">teeworksusa.com</b>
@@ -95,12 +96,7 @@
   <input type="text" id="domainInput" placeholder="Nhập domain để test (vd: abc.com)" style="padding:6px;width:250px;">
   <button onclick="testDomain()">Bắt đầu quét</button>
 </div>
-<p>Những domain đã test thành công</p>
-<pre class="wp-block-code">
-<code>
-allbluetees.com
-</code>
-</pre>
+
 <div class="domains" id="domainList">
   <div class="col" id="col1"></div>
   <div class="col" id="col2"></div>
@@ -131,7 +127,7 @@ const baseDomains = {
 };
 
 // --- Domain mới từ AllshirtV2 ---
-const allshirtDomains = ["teehandus.com","teleteeshirt.com","uscraftedtees.com","teesprime.com","clickoneshirt.com","melonashirt.com","mercuryshirt.com","wildfoxtee.com","capitoneshirt.com","lovingsquad.com","trenvoteeco.com","arjomany.com","designatshop.com","collectionpostertour.com","trendingnowe.com","neoteeco.com","hornnastee.com","dukamala.com","trendteeshirts.com","picturestees.com","teeshirtbear.com","limotees.com","digitalhandmades.com","newshirtstore.com","usatodayshirt.com"];
+const allshirtDomains = ["teehandus.com","teleteeshirt.com","uscraftedtees.com","teesprime.com","clickoneshirt.com","melonashirt.com","mercuryshirt.com","wildfoxtee.com","capitoneshirt.com","lovingsquad.com","trenvoteeco.com","arjomany.com","designatshop.com","collectionpostertour.com","trendingnowe.com","neoteeco.com","hornnastee.com","dukamala.com","trendteeshirts.com","picturestees.com","teeshirtbear.com","limotees.com","digitalhandmades.com","newshirtstore.com","usatodayshirt.com","allbluetees.com","narutees.com"];
 
 // --- Render danh sách domain ---
 function renderDomainList() {

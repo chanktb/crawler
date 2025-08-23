@@ -62,6 +62,15 @@
 <h1>🧭 CrawlerV7 - Thanh Thần Tún</h1>
 <button onclick="location.href='javascript:location.reload()'" style="background-color: blue; color: white; padding: 10px 20px;margin-bottom: 20px;">TẢI LẠI TRANG</button>
 <h2>Làm vừa thôi để thời gian nghỉ ngơi!</h2>
+<p>Những domain mới cập nhật</p>
+<pre class="block-update">
+<code>
+teeslocal.com
+allbluetees.com
+narutees.com
+dalatshirt.com
+</code>
+</pre>
 <div class="single-domain">
     <div class="teeworks-container">
         <b class="teeworks-domain-text">teeworksusa.com</b>
@@ -123,7 +132,16 @@ const baseDomains = {
   "eteeclothing.com": { url: "https://eteeclothing.com/", containerSel: ".row.large-columns-6.medium-columns-3.small-columns-2.row-small.slider.row-slider.slider-nav-reveal.slider-nav-push", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: "img", imgAttr: "src", urlSel: "a.plain", urlAttr: "href" },
   "nowbestshirt.com": { url: "https://nowbestshirt.com/", containerSel: ".row.large-columns-5.medium-columns-3.small-columns-2.row-small", itemSel: ".product-small.box", titleSel: "p.name.product-title a", imgSel: ".box-image img:nth-child(2)", imgAttr: "src", urlSel: "a.plain", urlAttr: "href" },
   "berrylittles.com": { url: "https://berrylittles.com/" },
-"serenashirt.com": { url: "https://serenashirt.com/", containerSel: ["section#section_993188716 .row", "section#section_351620060 .row"], itemSel: "div.product-small.box", titleSel: "p.name.product-title a", imgSel: "img:not(.show-on-hover)", imgAttr: "src", urlSel: "a.woocommerce-LoopProduct-link", urlAttr: "href" },
+  "serenashirt.com": {
+    url: "https://serenashirt.com/",
+    dynamic: true,
+    sections: ["Trending Shirts"] // Danh mục mong muốn
+  },
+  "teeslocal.com": {
+    url: "https://teeslocal.com/",
+    dynamic: true,
+    sections: ["Best Items For You", "Best Items Today"]
+  }
 };
 
 // --- Domain mới từ AllshirtV2 ---
@@ -208,7 +226,46 @@ async function showProducts(domainKey) {
     }
     return;
   }
+  
+  // Logic mới cho teeslocal.com và serenashirt.com
+  if (cfg.dynamic) {
+    try {
+      const res = await fetch(cfProxy + encodeURIComponent(cfg.url));
+      const text = await res.text();
+      const doc = new DOMParser().parseFromString(text, "text/html");
+      const results = [];
+      
+      const sections = doc.querySelectorAll('.product-small.col, .product-small.box');
+      
+      sections.forEach(item => {
+        const categoryEl = item.querySelector('.category');
+        const categoryText = categoryEl ? categoryEl.textContent.trim() : '';
 
+        // Kiểm tra xem danh mục có nằm trong danh sách mong muốn không
+        if (cfg.sections.includes(categoryText)) {
+          const titleEl = item.querySelector('.name.product-title a');
+          const imgEl = item.querySelector('.box-image img:not(.show-on-hover)'); // Lấy ảnh chính, bỏ qua ảnh hover
+          const urlEl = item.querySelector('a.woocommerce-LoopProduct-link');
+          
+          if (titleEl && imgEl && urlEl) {
+            results.push({
+              title: titleEl.textContent.trim(),
+              img: imgEl.getAttribute('src'),
+              url: urlEl.getAttribute('href')
+            });
+          }
+        }
+      });
+      
+      render(results);
+      document.getElementById("status").innerText = `Tìm thấy ${results.length} sản phẩm từ các danh mục được chỉ định`;
+    } catch (e) {
+      document.getElementById("status").innerText = "Lỗi: " + e.message;
+    }
+    return;
+  }
+
+  // Logic cũ cho các domain tĩnh khác
   try {
     const res = await fetch(cfProxy+encodeURIComponent(cfg.url));
     const text = await res.text();

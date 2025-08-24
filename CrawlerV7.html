@@ -409,8 +409,11 @@ async function crawlSequential(domainKey, homeUrl, targetCount=100, initialUrl=n
     } else if (domainKey === "berrylittles.com"){
         const nextA = doc.querySelector('a[href*="/product/"] i.icon-angle-right')?.closest('a');
         if(!nextA) break; nextUrl = abs(nextA.getAttribute("href"), curUrl);
+    } else if (domainKey === "dreameshirt.com" || domainKey === "meredpremium.com"){
+        const nextA = doc.querySelector('a[href*="/product/"] i.icon-angle-right')?.closest('a');
+        if(!nextA) break; nextUrl = abs(nextA.getAttribute("href"), curUrl);
     } else {
-      nextUrl=findNextProductUrlFromDetail(doc,curUrl,(i===2)?1:2);
+      nextUrl=findNextProductUrlFromDetail(doc,curUrl);
     }
     if(!nextUrl||seen.has(nextUrl)) break;
     const next=await fetchProductMetaAndDocSmart(nextUrl,i,domainKey);
@@ -450,7 +453,11 @@ async function fetchProductMetaAndDocSmart(url,index,domainKey){
 
 function abs(url,base){try{return new URL(url,base).href;}catch{return url;}}
 function findFirstProductFromHome(doc,base){const sel='.row.large-columns-4.medium-columns-3.small-columns-2.row-small.slider.row-slider';const c=doc.querySelector(sel);if(!c) return null;const a=c.querySelector('a[href*="/product/"]');return a?abs(a.getAttribute("href"),base):null;}
-function findNextProductUrlFromDetail(doc,baseUrl,occ){const all=Array.from(doc.querySelectorAll('li.prod-dropdown.has-dropdown a[rel="next"]'));if(!all.length) return null;const liList=all.map(a=>a.closest("li.prod-dropdown.has-dropdown")).filter(Boolean);const li=liList[occ-1];if(!li) return null;const a=li.querySelector('a[rel="next"]');if(!a) return null;return abs(a.getAttribute("href"),baseUrl);}
+function findNextProductUrlFromDetail(doc,baseUrl){
+  const nextA = doc.querySelector('li.prod-dropdown.has-dropdown a[rel="next"]');
+  if(!nextA) return null;
+  return abs(nextA.getAttribute("href"), baseUrl);
+}
 
 function render(list){
   const box=document.getElementById("results");

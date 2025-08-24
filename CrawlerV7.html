@@ -173,7 +173,7 @@ renderDomainList();
 
 // --- Fetch thông minh ---
 async function fetchSmart(url, index, domainKey) {
-  if (["dreameshirt.com","teeworksusa.com","uscraftedtees.com", "meredpremium.com", "berrylittles.com"].includes(domainKey)) {
+  if (["dreameshirt.com","teeworksusa.com","uscraftedtees.com", "meredpremium.com", "berrylittles.com", "teeslocal.com"].includes(domainKey)) {
     try {
       const res = await fetch(cfProxy + encodeURIComponent(url));
       if (res.ok) return res;
@@ -209,7 +209,7 @@ async function showProducts(domainKey) {
         initialUrl = document.getElementById("berrylittlesUrlInput").value.trim();
       }
       const list = await crawlSequential(domainKey, cfg.url, 100, initialUrl);
-      render(list);
+      render(list, domainKey);
       document.getElementById("status").innerText = `Tìm thấy ${list.length} sản phẩm`;
     } catch(e) {
       document.getElementById("status").innerText="Lỗi: "+e.message;
@@ -247,7 +247,7 @@ async function showProducts(domainKey) {
         }
       });
       
-      render(results);
+      render(results, domainKey);
       document.getElementById("status").innerText = `Tìm thấy ${results.length} sản phẩm từ các danh mục được chỉ định`;
     } catch (e) {
       document.getElementById("status").innerText = "Lỗi: " + e.message;
@@ -287,7 +287,7 @@ async function showProducts(domainKey) {
       }
       results.push({title,img,url});
     });
-    render(results);
+    render(results, domainKey);
     document.getElementById("status").innerText=`Tìm thấy ${results.length} sản phẩm`;
   } catch(e){document.getElementById("status").innerText="Lỗi: "+e.message;}
 }
@@ -369,7 +369,7 @@ async function showAllshirt(domain) {
 
     const results = await Promise.all(promises);
 
-    render(results);
+    render(results, domain);
     document.getElementById("status").innerText = `${domain}: ${results.length} sản phẩm`;
   } catch (e) {
     document.getElementById("status").innerText = `Lỗi ${domain}: ${e.message}`;
@@ -400,7 +400,7 @@ async function crawlSequential(domainKey, homeUrl, targetCount=100, initialUrl=n
   if(!firstUrl) throw new Error("Không tìm thấy SP đầu tiên");
   
   let {meta,doc,url:curUrl}=await fetchProductMetaAndDocSmart(firstUrl,1,domainKey);
-  if(meta){results.push(meta);seen.add(curUrl);render(results);}
+  if(meta){results.push(meta);seen.add(curUrl);render(results, domainKey);}
   for(let i=2;i<=targetCount;i++){
     let nextUrl;
     if(domainKey==="teeworksusa.com"){
@@ -419,7 +419,8 @@ async function crawlSequential(domainKey, homeUrl, targetCount=100, initialUrl=n
     const next=await fetchProductMetaAndDocSmart(nextUrl,i,domainKey);
     if(!next.meta) break;
     results.push(next.meta); seen.add(next.url); curUrl=next.url; doc=next.doc;
-    render(results); document.getElementById("status").innerText=`${domainKey}: ${results.length}/${targetCount}`;
+    render(results, domainKey);
+    document.getElementById("status").innerText=`${domainKey}: ${results.length}/${targetCount}`;
   }
   return results;
 }
@@ -459,15 +460,35 @@ function findNextProductUrlFromDetail(doc,baseUrl){
   return abs(nextA.getAttribute("href"), baseUrl);
 }
 
-function render(list){
-  const box=document.getElementById("results");
-  box.innerHTML="";
-  list.forEach((p,i)=>{
-    const div=document.createElement("div");
-    div.className="product";
-    div.innerHTML=`<div><b>#${i+1}</b></div>${p.img?`<img src="${p.img}" />`:"(no image)"}<div class="title">${p.title}</div><div class="url">${p.url}</div>`;
-    box.appendChild(div);
-  });
+function render(list, domainKey){
+  const box = document.getElementById("results");
+  box.innerHTML = "";
+
+	if (domainKey === "teeslocal.com" || domainKey === "serenashirt.com") {
+    const seenUrls = new Set();
+    const uniqueList = [];
+
+    list.forEach(p => {
+      if (!seenUrls.has(p.url)) {
+        seenUrls.add(p.url);
+        uniqueList.push(p);
+      }
+    });
+
+    uniqueList.forEach((p,i) => {
+      const div = document.createElement("div");
+      div.className = "product";
+      div.innerHTML = `<div><b>#${i+1}</b></div>${p.img?`<img src="${p.img}" />`:"(no image)"}<div class="title">${p.title}</div><div class="url">${p.url}</div>`;
+      box.appendChild(div);
+    });
+  } else {
+    list.forEach((p,i) => {
+      const div = document.createElement("div");
+      div.className = "product";
+      div.innerHTML = `<div><b>#${i+1}</b></div>${p.img?`<img src="${p.img}" />`:"(no image)"}<div class="title">${p.title}</div><div class="url">${p.url}</div>`;
+      box.appendChild(div);
+    });
+  }
 }
 </script>
 </body>

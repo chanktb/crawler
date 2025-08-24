@@ -217,14 +217,14 @@ async function showProducts(domainKey) {
     return;
   }
   
-  // Logic mới cho teeslocal.com và serenashirt.com
+  // Logic mới cho teeslocal.com và serenashirt.com (Đã cập nhật với seenUrls)
   if (cfg.dynamic) {
     try {
       const res = await fetch(cfProxy + encodeURIComponent(cfg.url));
       const text = await res.text();
       const doc = new DOMParser().parseFromString(text, "text/html");
       const results = [];
-      const seenUrls = new Set(); // Thêm một Set để lưu trữ URL đã thấy
+      const seenUrls = new Set(); // Chỉ áp dụng seenUrls tại đây
       
       const sections = doc.querySelectorAll('.product-small.col, .product-small.box');
       
@@ -260,13 +260,12 @@ async function showProducts(domainKey) {
     return;
   }
 
-  // Logic cũ cho các domain tĩnh khác
+  // Logic cũ cho các domain tĩnh khác (đã loại bỏ seenUrls)
   try {
     const res = await fetch(cfProxy+encodeURIComponent(cfg.url));
     const text = await res.text();
     const doc = new DOMParser().parseFromString(text,"text/html");
     const results=[];
-    const seenUrls = new Set(); // Thêm một Set để lọc các URL trùng lặp
     let items=[];
     if (Array.isArray(cfg.containerSel)) {
       cfg.containerSel.forEach(sel=>{
@@ -293,8 +292,7 @@ async function showProducts(domainKey) {
         url = abs(it.querySelector('a').href, cfg.url);
       }
       
-      if (url && !seenUrls.has(url)) { // Kiểm tra URL đã tồn tại chưa
-        seenUrls.add(url);
+      if (url) { // Không cần kiểm tra trùng lặp với seenUrls
         results.push({title,img,url});
       }
     });

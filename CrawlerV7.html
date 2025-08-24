@@ -352,7 +352,10 @@ async function showAllshirt(domain) {
         const imgTag = tmp.querySelector("img");
         if (imgTag && imgTag.src) img = imgTag.src;
       }
-      
+	  // Thêm logic để đảm bảo URL hình ảnh luôn sử dụng https
+      if (img && img.startsWith('http://')) {
+          img = img.replace('http://', 'https://');
+      }
       // Logic riêng cho teehandus.com (giữ nguyên)
       if (domain === "teehandus.com" && img.includes("-t-shirt.jpg")) {
         img = img.replace("-t-shirt.jpg", "-sweater.jpg");

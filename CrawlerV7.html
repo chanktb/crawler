@@ -188,7 +188,7 @@ async function fetchSmart(url, index, domainKey) {
   }
 }
 
-// --- Logic chính cho domain cũ ---
+// --- Logic chính cho domain cũ (Đã cập nhật) ---
 async function showProducts(domainKey) {
   const cfg = baseDomains[domainKey];
   document.getElementById("status").innerText = `Đang quét ${domainKey}...`;
@@ -224,6 +224,7 @@ async function showProducts(domainKey) {
       const text = await res.text();
       const doc = new DOMParser().parseFromString(text, "text/html");
       const results = [];
+      const seenUrls = new Set(); // Thêm một Set để lưu trữ URL đã thấy
       
       const sections = doc.querySelectorAll('.product-small.col, .product-small.box');
       
@@ -238,11 +239,15 @@ async function showProducts(domainKey) {
           const urlEl = item.querySelector('a.woocommerce-LoopProduct-link');
           
           if (titleEl && imgEl && urlEl) {
-            results.push({
-              title: titleEl.textContent.trim(),
-              img: imgEl.getAttribute('src'),
-              url: urlEl.getAttribute('href')
-            });
+            const url = urlEl.getAttribute('href');
+            if (!seenUrls.has(url)) { // Kiểm tra URL đã tồn tại chưa
+              seenUrls.add(url);
+              results.push({
+                title: titleEl.textContent.trim(),
+                img: imgEl.getAttribute('src'),
+                url: url
+              });
+            }
           }
         }
       });
@@ -260,6 +265,8 @@ async function showProducts(domainKey) {
     const res = await fetch(cfProxy+encodeURIComponent(cfg.url));
     const text = await res.text();
     const doc = new DOMParser().parseFromString(text,"text/html");
+    const results=[];
+    const seenUrls = new Set(); // Thêm một Set để lọc các URL trùng lặp
     let items=[];
     if (Array.isArray(cfg.containerSel)) {
       cfg.containerSel.forEach(sel=>{
@@ -270,7 +277,7 @@ async function showProducts(domainKey) {
       const c=doc.querySelector(cfg.containerSel);
       if(c) items=c.querySelectorAll(cfg.itemSel);
     }
-    const results=[];
+    
     items.forEach(it=>{
       let title="";
       if(cfg.titleAttr){const tEl=it.querySelector(cfg.titleSel); if(tEl) title=tEl.getAttribute(cfg.titleAttr)||"";}
@@ -285,7 +292,11 @@ async function showProducts(domainKey) {
       } else if (it.querySelector('a')) {
         url = abs(it.querySelector('a').href, cfg.url);
       }
-      results.push({title,img,url});
+      
+      if (url && !seenUrls.has(url)) { // Kiểm tra URL đã tồn tại chưa
+        seenUrls.add(url);
+        results.push({title,img,url});
+      }
     });
     render(results);
     document.getElementById("status").innerText=`Tìm thấy ${results.length} sản phẩm`;

@@ -360,6 +360,10 @@ async function showAllshirt(domain) {
       if (domain === "teehandus.com" && img.includes("-t-shirt.jpg")) {
         img = img.replace("-t-shirt.jpg", "-sweater.jpg");
       }
+      // Logic riêng cho thefunnyt.com (giữ nguyên)
+      if (domain === "thefunnyt.com" && img.includes("-t-shirt.jpg")) {
+        img = img.replace("-Person-Shirt.webp", "-Premium-Shirt.webp");
+      }
 
       return Promise.resolve({ title, img, url });
     });

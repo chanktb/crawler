@@ -254,7 +254,7 @@ async function showProducts(domainKey) {
     return;
   }
 
-// Logic cũ cho các domain tĩnh khác
+ // Logic cũ cho các domain tĩnh khác
 try {
   const res = await fetch(cfProxy + encodeURIComponent(cfg.url));
   const text = await res.text();
@@ -284,24 +284,26 @@ try {
     const imgEl = it.querySelector(cfg.imgSel);
     if (imgEl) img = imgEl.getAttribute(cfg.imgAttr) || "";
 
-    // Thêm logic mới chỉ cho geekteesus.com
-    if (domainKey === "geekteesus.com" && img.includes("-T-shirt.jpg")) {
-      const newImgUrl1 = img.replace("-T-shirt.jpg", "-Ornament-poster-black.jpg");
-      try {
-        const check1 = await fetch(newImgUrl1, { method: 'HEAD' });
-        if (check1.ok) {
-          img = newImgUrl1;
-        } else {
-          const newImgUrl2 = img.replace("-T-shirt.jpg", "-Orament-X-Mas-2024.jpg");
-          const check2 = await fetch(newImgUrl2, { method: 'HEAD' });
-          if (check2.ok) {
-            img = newImgUrl2;
-          }
-        }
-      } catch (e) {
-        // Nếu có lỗi, giữ lại URL gốc
-      }
+// Thêm logic mới chỉ cho geekteesus.com
+if (domainKey === "geekteesus.com" && img.includes("-T-shirt.jpg")) {
+  const newImgUrl1 = img.replace("-T-shirt.jpg", "-Ornament-poster-black.jpg");
+  const newImgUrl2 = img.replace("-T-shirt.jpg", "-Orament-X-Mas-2024.jpg");
+
+  try {
+    const [res1, res2] = await Promise.all([
+      fetch(cfProxy + encodeURIComponent(newImgUrl1), { method: 'HEAD' }),
+      fetch(cfProxy + encodeURIComponent(newImgUrl2), { method: 'HEAD' })
+    ]);
+
+    if (res1.ok) {
+      img = newImgUrl1;
+    } else if (res2.ok) {
+      img = newImgUrl2;
     }
+  } catch (e) {
+    // Nếu có lỗi, giữ lại URL gốc
+  }
+}
 
     let url = "";
     if (cfg.urlSel) {

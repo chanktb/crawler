@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8" />
-<title>CrawlerV7 - Thanh Thần Tún</title>
+<title>Thanh Thần Tún POD IdeaV7</title>
 <style>
   body { font-family: Arial, sans-serif; background:#f4f6fa; margin:0; padding:20px; text-align:center; }
   h1 { font-size:22px; margin-bottom:20px; }
@@ -58,10 +58,9 @@
 </script>
 </head>
 <body>
-<h1><a href="/crawler/">DANH SÁCH TOOL</a></h1>
-<h1>🧭 CrawlerV7 - Thanh Thần Tún</h1>
-<button onclick="location.href='javascript:location.reload()'" style="background-color: blue; color: white; padding: 10px 20px;margin-bottom: 20px;">TẢI LẠI TRANG</button>
-
+<h1><button onclick="location.href='javascript:location.reload()'" style="background-color: blue; color: white; padding: 10px 20px;margin-bottom: 20px;">Thanh Thần Tún POD IdeaV7</button></h1>
+<h2>Tổng hợp trending mới nhất trong ngày của ngành POD</h2>
+<p>All in one - 1-click bắt trend POD của 40+ website về POD USA!</p>
 <div class="single-domain">
     <div class="teeworks-container">
         <b class="teeworks-domain-text">teeworksusa.com</b>
@@ -255,41 +254,72 @@ async function showProducts(domainKey) {
     return;
   }
 
-  // Logic cũ cho các domain tĩnh khác
-  try {
-    const res = await fetch(cfProxy+encodeURIComponent(cfg.url));
-    const text = await res.text();
-    const doc = new DOMParser().parseFromString(text,"text/html");
-    let items=[];
-    if (Array.isArray(cfg.containerSel)) {
-      cfg.containerSel.forEach(sel=>{
-        const c=doc.querySelector(sel);
-        if(c){c.querySelectorAll(cfg.itemSel).forEach(it=>items.push(it));}
-      });
-    } else {
-      const c=doc.querySelector(cfg.containerSel);
-      if(c) items=c.querySelectorAll(cfg.itemSel);
-    }
-    const results=[];
-    items.forEach(it=>{
-      let title="";
-      if(cfg.titleAttr){const tEl=it.querySelector(cfg.titleSel); if(tEl) title=tEl.getAttribute(cfg.titleAttr)||"";}
-      else {const tEl=it.querySelector(cfg.titleSel); if(tEl) title=tEl.textContent.trim();}
-      let img=""; const imgEl=it.querySelector(cfg.imgSel); if(imgEl) img=imgEl.getAttribute(cfg.imgAttr)||"";
-      let url=""; 
-      if (cfg.urlSel) {
-        const urlEl = it.querySelector(cfg.urlSel);
-        if (urlEl) url = abs(urlEl.getAttribute(cfg.urlAttr), cfg.url);
-      } else if(it.closest('a')) {
-        url = abs(it.closest('a').href, cfg.url);
-      } else if (it.querySelector('a')) {
-        url = abs(it.querySelector('a').href, cfg.url);
-      }
-      results.push({title,img,url});
+ // Logic cũ cho các domain tĩnh khác
+try {
+  const res = await fetch(cfProxy + encodeURIComponent(cfg.url));
+  const text = await res.text();
+  const doc = new DOMParser().parseFromString(text, "text/html");
+  let items = [];
+  if (Array.isArray(cfg.containerSel)) {
+    cfg.containerSel.forEach(sel => {
+      const c = doc.querySelector(sel);
+      if (c) { c.querySelectorAll(cfg.itemSel).forEach(it => items.push(it)); }
     });
-    render(results, domainKey);
-    document.getElementById("status").innerText=`Tìm thấy ${results.length} sản phẩm`;
-  } catch(e){document.getElementById("status").innerText="Lỗi: "+e.message;}
+  } else {
+    const c = doc.querySelector(cfg.containerSel);
+    if (c) items = c.querySelectorAll(cfg.itemSel);
+  }
+  const results = [];
+  for (const it of items) { // Sử dụng for...of để có thể dùng await
+    let title = "";
+    if (cfg.titleAttr) {
+      const tEl = it.querySelector(cfg.titleSel);
+      if (tEl) title = tEl.getAttribute(cfg.titleAttr) || "";
+    } else {
+      const tEl = it.querySelector(cfg.titleSel);
+      if (tEl) title = tEl.textContent.trim();
+    }
+    
+    let img = "";
+    const imgEl = it.querySelector(cfg.imgSel);
+    if (imgEl) img = imgEl.getAttribute(cfg.imgAttr) || "";
+
+    // Thêm logic mới chỉ cho geekteesus.com
+    if (domainKey === "geekteesus.com" && img.includes("-T-shirt.jpg")) {
+      const newImgUrl1 = img.replace("-T-shirt.jpg", "-Ornament-poster-black.jpg");
+      try {
+        const check1 = await fetch(newImgUrl1, { method: 'HEAD' });
+        if (check1.ok) {
+          img = newImgUrl1;
+        } else {
+          const newImgUrl2 = img.replace("-T-shirt.jpg", "-Orament-X-Mas-2024.jpg");
+          const check2 = await fetch(newImgUrl2, { method: 'HEAD' });
+          if (check2.ok) {
+            img = newImgUrl2;
+          }
+        }
+      } catch (e) {
+        // Nếu có lỗi, giữ lại URL gốc
+      }
+    }
+
+    let url = "";
+    if (cfg.urlSel) {
+      const urlEl = it.querySelector(cfg.urlSel);
+      if (urlEl) url = abs(urlEl.getAttribute(cfg.urlAttr), cfg.url);
+    } else if (it.closest('a')) {
+      url = abs(it.closest('a').href, cfg.url);
+    } else if (it.querySelector('a')) {
+      url = abs(it.querySelector('a').href, cfg.url);
+    }
+
+    results.push({ title, img, url });
+  }
+  render(results, domainKey);
+  document.getElementById("status").innerText = `Tìm thấy ${results.length} sản phẩm`;
+} catch (e) {
+  document.getElementById("status").innerText = "Lỗi: " + e.message;
+}
 }
 // --- Logic cho domain AllshirtV2 và DigitalHandmades (Đã cập nhật) ---
 async function showAllshirt(domain) {

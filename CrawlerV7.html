@@ -254,7 +254,7 @@ async function showProducts(domainKey) {
     return;
   }
 
- // Logic cũ cho các domain tĩnh khác
+// Logic cũ cho các domain tĩnh khác
 try {
   const res = await fetch(cfProxy + encodeURIComponent(cfg.url));
   const text = await res.text();
